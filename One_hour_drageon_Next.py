@@ -16,11 +16,7 @@ PINK  = (255, 64,255)
 BLINK = [(224,255,255), (192,224,255), (128,224,255), (64, 192,255), (128,224,255), (192,240,255)]
 
 # 画像の読み込み
-#filename = os.path.abspath(__file__).replace("/One_hour_drageon_Next.py", "")
-#filename = os.getcwd()
-#filename = "/Users/owner/Desktop/One2"
 filename = os.path.expanduser('~/Desktop/One2')
-#print(filename)
 imgTitle = pygame.image.load(filename + "/image/title.png")
 imgExplanation = pygame.image.load(filename + "/image/setumei.png")
 imgWall = pygame.image.load(filename + "/image/wall.png")
@@ -66,29 +62,36 @@ imgBossField = [
     pygame.image.load(filename + "/image/floor_20.png"),
     pygame.image.load(filename + "/image/floor_30.png")
 ]
-#dsn = "dbname=postgres user=postgres host=192.168.3.7 password=naga1969 port=5432"
-dsn = "dbname=game host=localhost user=nagamasa password=scram-sha-256"
+
+#DB接続文字列（自宅内の読み込み）
+#dsn = "dbname=postgres user=postgres host=192.168.3.7 password=naga1969 port=5432"  #外部PC接続用
+dsn = "dbname=game host=localhost user=nagamasa password=naga19691"                  #自分のPC接続用
+conn = 1  #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
+cur = 1   #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
 try:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
- 
     cur.execute("select id from test where name = 'MAX';")
     (fl_max,) = cur.fetchone()
 except psycopg2.Error as e:
-    conn.rollback()
+    if conn != 1:
+        conn.rollback()
     fl_max = 0
 finally:
-    cur.close()
-    conn.close()
-
+    if cur != 1:   
+        cur.close()
+    if conn != 1:
+        conn.close()
+    
 # 変数の宣言
-speed = 1
-idx = 0
-tmr = 0
-floor = 0
-welcome = 0
-startInfo = 0
+speed = 1         #スピード
+idx = 0           #状態
+tmr = 0           #処理タイミング
+floor = 0         #フロア数
+welcome = 0       #フロア数表示用
+startInfo = 0     
 
+#プレイヤーステータス
 pl_x = 0
 pl_y = 0
 pl_d = 0
@@ -112,10 +115,12 @@ skill_c = True
 def_ca = 0
 def_c = 0
 
+#アイテム
 potion = 0
 blazegem = 0
 treasure = 0
 
+#敵情報
 emy_name = ""
 emy_lifemax = 0
 emy_life = 0
@@ -129,7 +134,7 @@ emy_step = 0
 emy_blink = 0
 emy_exp = 0
 
-
+#ボス情報S
 boss_name = ""
 boss_lifemax = 0
 boss_life = 0
@@ -144,11 +149,16 @@ boss_blink = 0
 boss_step = 0
 boss = True
 
+#その他情報S
 dmg_eff = 0
 btl_cmd = 0
 skill_cmd = 0
 map_flg = False
 
+# 戦闘メッセージの表示処理
+message = [""]*(10)
+
+#各表示情報
 COMMAND = ["[A]ttack", "[P]otion", "[B]laze gem", "[R]un"]
 COMMAND1 = ["[A]ttack", "[P]otion", "[B]laze gem", "[K]Skill", "[R]un"]
 
@@ -163,9 +173,11 @@ EMY_NAME = [
 BOSS_NAME = ["Red Dragon", "Prince", "Deamon"]
 SKILL_NAME = ["[1]Back","[2]Shower Arrow MP -30", "[3]Defence Charge MP-20"]
 
+#ダンジョンの大きさ
 MAZE_W = 15
 MAZE_H = 9
 maze = []
+
 for y in range(MAZE_H):
     maze.append([0]*MAZE_W)
 
@@ -319,6 +331,7 @@ def draw_dungeon(bg, fnt, FONT_1):# ダンジョンを描画する
          
 def put_event(): # 床にイベントを配置する
     global pl_x, pl_y, pl_d, pl_a
+    
     #　階段の配置
     while True:
         x = random.randint(3, DUNGEON_W-4)
@@ -329,12 +342,14 @@ def put_event(): # 床にイベントを配置する
                    dungeon[y+ry][x+rx] = 0
            dungeon[y][x] = 3
            break
+       
     #　繭の配置
     for i in range(35):
         x = random.randint(3, DUNGEON_W-4)
         y = random.randint(3, DUNGEON_H-4)
         if (dungeon[y][x] == 0):
             dungeon[y][x] = 2
+            
     # 宝箱の配置
     for i in range(10):
         x = random.randint(3, DUNGEON_W-4)
@@ -358,20 +373,22 @@ def player_exp():# 経験値の管理
     global pl_lv, max_exp, skill
 
     i = pl_lv - 1
+    #経験値リストレベル60まで
     exp_list = [
                 100,200,300,400,650,900,1300,1800,2600,3200,
                 4000,5000,6000,7000,8000,9000,10000,11000,12000,13000,
                 15000,17000,19000,21000,23000,25000,27000,29000,31000,33000,
                 36000,39000,42000,45000,48000,51000,54000,57000,60000,63000,
                 68000,73000,78000,83000,88000,93000,98000,103000,108000,113000,
-                123000,133000,143000,153000,163000,173000,183000,193000,203000,213000,
-                None
+                123000,133000,143000,153000,163000,173000,183000,193000,203000,213000
                 ]
+    #レベル60以上は倍数で管理
     if i >= 60:
         max_exp *= 1.2
     else:
         max_exp = exp_list[i]
-        
+    
+    #レベル5以上と15レベル以上は新スキル獲得
     if pl_lv == 5:
         skill = skill + 1
     if pl_lv == 15:
@@ -436,25 +453,27 @@ def move_player(key): # 主人公の移動
     # 方向キーで上下左右に移動
     x = pl_x
     y = pl_y
-    if key[K_UP] == 1:
+    if key[K_UP] == 1: #上移動
         pl_d = 0
         if dungeon[pl_y-1][pl_x] != 9:
             pl_y = pl_y - 1
-    if key[K_DOWN] == 1:
+    if key[K_DOWN] == 1: #下移動
         pl_d = 1
         if dungeon[pl_y+1][pl_x] != 9:
             pl_y = pl_y + 1
-    if key[K_LEFT] == 1:
+    if key[K_LEFT] == 1: #左移動
         pl_d = 2
         if dungeon[pl_y][pl_x-1] != 9:
             pl_x = pl_x - 1
-    if key[K_RIGHT] == 1:
+    if key[K_RIGHT] == 1: #右移動
         pl_d = 3
         if dungeon[pl_y][pl_x+1] != 9:
             pl_x = pl_x + 1
     pl_a = pl_d*2
     if pl_x != x or pl_y != y: #移動したら食料の量と体力とMPを計算
         pl_a = pl_a + tmr%2 # 移動したら足踏みのアニメーション
+        
+        #SPの管理SP、SPがなくなるとライフが１ずつ減少する
         if SP > 0:
             SP = SP - 1
             if pl_life < pl_lifemax:
@@ -469,7 +488,8 @@ def move_player(key): # 主人公の移動
                 idx = 9
                 tmr = 0
             if pl_mp < pl_mpmax:
-                pl_mp = pl_mp + 1   
+                pl_mp = pl_mp + 1
+                
     # [P]ボタンで回復
     if key[K_p] == 1:
         treasure = 0
@@ -497,6 +517,7 @@ def move_player(key): # 主人公の移動
             pl_def = pl_def + 1
             pl_p = pl_p - 1
             point_se.play()
+    
     # [C]ボタンでポイント使用してACYをアップする
     if key[K_c] == 1:
         if pl_p > 0:
@@ -545,7 +566,8 @@ def draw_para(bg, fnt, FONT_1): #主人公の能力表示
     Y = 600
     bg.blit(imgPara, [X, Y])
     col = WHITE
-    if pl_life < int(pl_lifemax/5) and tmr%2 == 0: col = RED
+    if pl_life < int(pl_lifemax/5) and tmr%2 == 0:
+        col = RED
     draw_text(bg, "{}/{}".format(pl_life, pl_lifemax), X+83, Y+4, FONT_1, col)
     draw_text(bg, str(pl_atk),X+190, Y+6, FONT_1, WHITE)
     draw_text(bg, str(pl_def),X+190, Y+25, FONT_1, WHITE)
@@ -555,7 +577,8 @@ def draw_para(bg, fnt, FONT_1): #主人公の能力表示
     draw_text(bg, "{}/{}".format(pl_exp, max_exp), X+175, Y+62, FONT_1, WHITE)
     draw_text(bg, "{}/{}".format(pl_mp, pl_mpmax), X+83, Y+19, FONT_1, WHITE)
     col = WHITE
-    if SP == 0 and tmr%2 == 0: col = RED
+    if SP == 0 and tmr%2 == 0:
+        col = RED
     draw_text(bg, "{}/{}".format(SP, max_SP), X+83, Y+35, FONT_1, col)
     draw_text(bg, str(potion), X+266, Y+6, FONT_1, WHITE)
     draw_text(bg, str(blazegem), X+266, Y+25, FONT_1, WHITE)
@@ -683,10 +706,10 @@ def battle_command(bg, fnt, key): # コマンドの入力と表示
         if pl_lv >= 15 and skill_c == False:
             if skill_cmd < 2:
                 skill_cmd += 1
-    if key[K_SPACE] or key[K_RETURN]:
+    if key[K_SPACE] or key[K_RETURN]: #スペースまたはリターンキー
         ent = True
             
-    if skill <= 1:
+    if skill <= 1: #スキル状態確認
         for i in range(4):
             c = WHITE
             if btl_cmd == i: c = BLINK[tmr%6]
@@ -708,10 +731,7 @@ def battle_command(bg, fnt, key): # コマンドの入力と表示
                 if skill_cmd == i: c = BLINK[tmr%6]
                 draw_text(bg, SKILL_NAME[i], 20, 360+i*60, fnt, c)
     return ent
-    #return skill_c
 
-# 戦闘メッセージの表示処理
-message = [""]*(10)
 def init_message():
     for i in range(10):
         message[i] = ""
@@ -739,7 +759,7 @@ def Map_info(bg):
                     if dungeon[y][x] != 9:
                         pygame.draw.rect(bg,WHITE,Rect(90 + mx + rmx,100 + my + rmy,1,1))
 
-def Save_data():
+def Save_data(): #セーブする
     global pl_lv, pl_exp, max_exp, potion, blazegem, pl_lifemax, pl_life, def_ca, def_c
     global pl_atk, pl_def, pl_acy, pl_eva, SP, max_SP, skill, pl_mp, pl_mpmax, skill_c
     global floor, pl_p, boss, idx, pl_x, pl_y, dsn
@@ -762,9 +782,9 @@ def Save_data():
     sData = [pl_lv, pl_exp, max_exp, potion, blazegem, pl_lifemax, pl_life, def_ca, def_c,
              pl_atk, pl_def, pl_acy, pl_eva, SP, max_SP, skill, pl_mp, pl_mpmax, skill_cint, floor, pl_p,
              boss_int, idx, pl_x, pl_y]
-    #dsn = "dbname=game host=localhost user=nagamasa password=scram-sha-256 port=5432"
-    #dsn = "dbname=game host=60.120.72.111 user=nagamasa password=scram-sha-256 port=5432"
     try:
+        conn = 1    #１のままの場合接続に失敗
+        cur = 1     #１のままの場合接続に失敗
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
 
@@ -786,17 +806,23 @@ def Save_data():
     
         conn.commit()
         cur.close()
-    except:
-        conn.rollback()
+    except psycopg2.Error as e:
+        if conn != 1:
+            conn.rollback()
     finally:
-        conn.close()
+        if cur != 1:   
+            cur.close()
+        if conn != 1:
+            conn.close()
 
-def Load_data():
+def Load_data(): #ロードする
     global pl_lv, pl_exp, max_exp, potion, blazegem, pl_lifemax, pl_life, def_ca, def_c
     global pl_atk, pl_def, pl_acy, pl_eva, SP, max_SP, skill, pl_mp, pl_mpmax, skill_c
     global floor, pl_p, boss, idx, pl_x, pl_y, dsn
+    #データをDBからロードする
     try:
-        #dsn = "dbname=game host=localhost user=nagamasa password=scram-sha-256"
+        conn = 1  #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
+        cur = 1   #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
         cur.execute("select state from status where id = 1 order by stateid;")
@@ -838,12 +864,14 @@ def Load_data():
         for lDatamapValue in lDatamap:
             dungeon[lDatamapValue[2]][lDatamapValue[1]] = lDatamapValue[3]
         cur.close()
-    except:
-        conn.rollback()
+    except psycopg2.Error as e:
+        if conn != 1:
+            conn.rollback()
     finally:
-        conn.close()
-    #cur.execute("select id from test where name = 'MAX';")
-    #(floor,) = cur.fetchone()
+        if cur != 1:   
+            cur.close()
+        if conn != 1:
+            conn.close()
 
 def main():# メイン処理
     global speed, idx, tmr, floor, fl_max, welcome
@@ -860,12 +888,10 @@ def main():# メイン処理
     pygame.display.set_caption("one hour Dungeon Next")
     screen = pygame.display.set_mode((880, 720))
     clock = pygame.time.Clock()
+    #フォント設定s
     font = pygame.font.Font(filename + "/Freesansbold.ttf" , 30)
     fontS = pygame.font.Font(filename + "/Freesansbold.ttf", 20)
     FONT_1 = pygame.font.Font(filename+ "/Freesansbold.ttf", 13)
-    #font = pygame.font.Sysfont("Arial", 40)
-    #fontS = pygame.font.Sysfont("Arial", 30)
-    #FONT_1 = pygame.font.Sysfont("Arial", 23)
     se = [ # 効果音とジングル
         pygame.mixer.Sound(filename + "/sound/ohd_se_attack.ogg"),
         pygame.mixer.Sound(filename + "/sound/eff_fireball.ogg"),
@@ -879,7 +905,8 @@ def main():# メイン処理
         pygame.mixer.Sound(filename + "/sound/dmg_wind_g.ogg"),
         pygame.mixer.Sound(filename + "/sound/def_up.ogg")
     ]    
-
+    
+    #ゲーム終了まで無限ループさせる
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -891,7 +918,7 @@ def main():# メイン処理
                     if speed == 4:
                         speed = 1
 
-        tmr = tmr + 1
+        tmr = tmr + 1 #タイマーを１上昇
         key = pygame.key.get_pressed()
 
         if idx == 0: # タイトル画面
@@ -900,10 +927,13 @@ def main():# メイン処理
                 pygame.mixer.music.play(-1)
             screen.fill(BLACK)
             screen.blit(imgTitle, [40, 60])
+            
+            #過去履歴がある場合、最大フロア数を表示
             if fl_max >= 0:
                 draw_text(screen, "You reached floor {}.".format(fl_max), 300, 460, font, CYAN)
             draw_text(screen, "Press space key", 320, 560, font, BLINK[tmr%6]) 
-            #pygame.draw.rect(screen,WHITE,Rect(200,450,450,200))
+            
+            #スペースキー押下でNewGameContinueをそれぞれ表示
             if key[K_SPACE] == 1:
                 pygame.draw.rect(screen,BLACK,Rect(300,450,400,200))
                 startInfo = 0
@@ -911,6 +941,7 @@ def main():# メイン処理
 
         elif idx == 1: # プレイヤーの移動
             move_player(key)
+            #表示の変更
             draw_dungeon(screen, fontS, FONT_1)
             draw_text(screen, "floor {} ({},{})".format(floor, pl_x, pl_y), 60, 40, fontS, WHITE)
             draw_text(screen, "[P] = potion use", 330, 600, FONT_1, WHITE)
@@ -927,17 +958,19 @@ def main():# メイン処理
 
         elif idx == 2: # 画面の切替
             draw_dungeon(screen, fontS, FONT_1)
+            
+            #タイマーの時間により処理を変更する
             if 1 <= tmr and tmr <= 5:
                 h = 80*tmr
                 pygame.draw.rect(screen, BLACK, [0, 0, 880, h])
                 pygame.draw.rect(screen, BLACK, [0, 720-h, 880, h])
-            if tmr == 5:
+            if tmr == 5: #フロアの制御
                 floor = floor + 1
                 if floor > fl_max:
                     fl_max = floor
                     try:
-                        #dsn = "dbname=game host=localhost user=nagamasa password=scram-sha-256"
-                        #dsn = "dbname=game user=nagamasa password=scram-sha-256 port=5432"
+                        conn = 1    #１のままの場合接続失敗
+                        cur = 1     #１のままの場合接続失敗
                         conn = psycopg2.connect(dsn)
                         cur = conn.cursor()
                         cur.execute("UPDATE test SET id = %s", (fl_max,))
@@ -946,22 +979,26 @@ def main():# メイン処理
                         (fl_max,) = cur.fetchone()
                         cur.close()
                     except:
-                        conn.rollback()
+                        if conn != 1:
+                            conn.rollback()
                     finally:
-                        conn.close()
+                        if conn != 1:
+                            conn.close()
+                        if cur != 1:
+                            cur.close()
                 welcome = 15
-            if tmr == 6:
+            if tmr == 6: #ボスダンジョンへ移動か、通常ダンジョンかを制御する
                 if floor == 10 or floor == 20 or floor == 30:
                     boss_dungeon()
                     put_boss_event()
                 else:
                     make_dungeon()
                     put_event()
-            if 7 <= tmr and tmr <= 10:
+            if 7 <= tmr and tmr <= 10: #画面表示の変更
                 h = 80*(10-tmr)
                 pygame.draw.rect(screen, BLACK, [0, 0, 880, h])
                 pygame.draw.rect(screen, BLACK, [0, 720-h, 880, h])
-            if tmr == 11:
+            if tmr == 11: #ダンジョンの階数によりBGMを変更する
                 if floor == 11:
                     pygame.mixer.music.load(filename + "/sound/0021.ogg")
                     pygame.mixer.music.play(-1)
@@ -1001,6 +1038,8 @@ def main():# メイン処理
             X = int(440-img_rz.get_width()/2)
             Y = int(360-img_rz.get_height()/2)
             screen.blit(img_rz, [X, Y])
+            
+            #周りの繭を焼き払う
             if tmr == 1:
                 set_message("Blaze gem!")
                 pygame.mixer.Sound(filename + "/sound/eff_fireball.ogg").play()
@@ -1034,16 +1073,16 @@ def main():# メイン処理
                 idx = 1
 
         elif idx == 9: # ゲームオーバー
-            if tmr <= 30:
+            if tmr <= 30: #倒れるエフェクト
                 PL_TURN = [2, 4, 0, 6]
                 pl_a = PL_TURN[tmr%4]
                 if tmr == 30: pl_a = 8 # 倒れた絵
                 draw_dungeon(screen, fontS, FONT_1)
-            elif tmr == 31:
+            elif tmr == 31: #倒れた後の表示
                 se[3].play()
                 draw_text(screen, "You died.", 360, 240, font, RED)
                 draw_text(screen, "Game over.", 360, 380, font, RED)
-            elif tmr == 120:
+            elif tmr == 120: #初期化処理
                 idx = 0
                 tmr = 0
 
@@ -1589,7 +1628,7 @@ def main():# メイン処理
                 pygame.mixer.music.load(filename + "/sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             
-        elif idx == 26:
+        elif idx == 26: #スタート画面（初めてか続きからを表示と制御）
             #キーボタンが上の時、NewGame下の時、Continue
             if key[K_UP] == 1:
                 startInfo = 0
@@ -1610,12 +1649,16 @@ def main():# メイン処理
                     idx = 28
             draw_text(screen, "New Game", 375, 500, font, a)
             draw_text(screen, "Continue", 375, 590, font, b)
-        elif idx == 27:
+        elif idx == 27: #セーブ
             #セーブ成功時
             draw_text(screen, "SaveOK", 380, 240, font, WHITE)
             idx = 1
-        elif idx == 28:
-            #Load_data()
+        elif idx == 28: #ロード（Continue押下時）
+            Load_data()
+            #セーブデータがない場合は動作させない
+            if  pl_atk == 0:
+                idx = 0
+                continue
             if floor <= 10:
                 pygame.mixer.music.load(filename + "/sound/0022.ogg")
             if floor >= 11 and floor <= 20:
