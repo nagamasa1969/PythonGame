@@ -30,9 +30,10 @@ class CommandData():
     welcome = 0     #初期表示
     EMY_NAME = []   #敵の名称
     BOSSNAME = []   #ボスの名称
-    dmg= 0         #ダメージ
+    dmg = 0         #ダメージ
+    DB = ""         #DB情報
     
-    def __init__(self, screen, clock, font, fontS, FONT_1, se, point_se, TRE_NAME, COMMAND, COMMAND1, SKILL_NAME, EMY_NAME, BOSSNAME):
+    def __init__(self, screen, clock, font, fontS, FONT_1, se, point_se, TRE_NAME, COMMAND, COMMAND1, SKILL_NAME, EMY_NAME, BOSSNAME, DB):
         #制御情報の初期化
         self.tmr = 0
         self.idx = 0
@@ -60,8 +61,9 @@ class CommandData():
         self.EMY_NAME = EMY_NAME
         self.BOSSNAME = BOSSNAME
         self.dmg= 0
+        self.DB = DB
     
-    def move_player(self, key, pl, maps, db): # 主人公の移動
+    def move_player(self, key, pl, maps): # 主人公の移動
     
         if maps.dungeon[pl.pl_y][pl.pl_x] == 1: # 宝箱に載った
             maps.dungeon[pl.pl_y][pl.pl_x] = 0
@@ -72,7 +74,7 @@ class CommandData():
                 pl.blazegem = pl.blazegem + 1
             if self.treasure == 2:
                 pl.SP = int(pl.SP/2)
-            self.idx = 3
+            self.idx = 3 # アイテム入手もしくはトラップ
             self.tmr = 0
             return
         if maps.dungeon[pl.pl_y][pl.pl_x] == 2: # 繭に載った
@@ -88,14 +90,14 @@ class CommandData():
                     pl.SP = pl.SP + 150
                 if pl.SP >= pl.max_SP:
                     pl.SP = pl.max_SP
-                self.idx = 3
+                self.idx = 3 # アイテム入手もしくはトラップ
                 self.tmr = 0
             else: # 敵の出現
-                self.idx = 10
+                self.idx = 10 # 戦闘開始
                 self.tmr = 0
             return
         if maps.dungeon[pl.pl_y][pl.pl_x] == 3: # 階段に載った
-            self.idx = 2
+            self.idx = 2 #画面移動へ
             self.tmr = 0
             return
         if maps.dungeon[pl.pl_y][pl.pl_x] == 4: # ボス戦後の宝箱に載った
@@ -105,13 +107,13 @@ class CommandData():
                 pl.potion = pl.potion + 1
             if self.treasure == 1:
                 pl.blazegem = pl.blazegem + 1
-            self.idx = 3
+            self.idx = 3 # アイテム入手もしくはトラップ
             self.tmr = 0
             return
 
         if maps.dungeon[pl.pl_y][pl.pl_x] == 5: # ボスとの戦闘
             maps.dungeon[pl.pl_y][pl.pl_x] = 0
-            self.idx = 24
+            self.idx = 24 # ボスの戦闘
             self.tmr = 0
             return
         # 方向キーで上下左右に移動
@@ -149,7 +151,7 @@ class CommandData():
                 if pl.pl_life <= 0:
                     pl.pl_life = 0
                     pygame.mixer.music.stop()
-                    pl.self.idx = 9
+                    pl.self.idx = 9 # ゲームオーバー
                     pl.self.tmr = 0
                 if pl.pl_mp < pl.pl_mpmax:
                     pl.pl_mp = pl.pl_mp + 1
@@ -158,14 +160,14 @@ class CommandData():
         if key[K_p] == 1:
             self.treasure = 0
             if pl.potion > 0:
-                self.idx = 4
+                self.idx = 4 # フィールドアイテム使用(ポーション)
                 self.tmr = 0
 
         # [B]ボタンでブレイズジェム使用する
         if key[K_b] == 1:
             self.trasure = 1
             if pl.blazegem > 0:
-                self.idx = 5
+                self.idx = 5 # フィールドアイテム使用(ブレイズジェム)
                 self.tmr = 0
             
         # [A]ボタンでポイント使用してATKをアップする
@@ -216,8 +218,8 @@ class CommandData():
     
         # [V]ボタンでセーブ
         if key[K_v] == 1:
-            db.Save_data()
-            self.idx = 27
+            self.DB.Save_data(pl, self.floor, self.idx, self.boss, maps)
+            self.idx = 27 #セーブ
 
     def init_battle(self, filename): # 戦闘に入る準備をする
         typ = random.randint(0, self.floor)
@@ -319,6 +321,8 @@ class CommandData():
             self.screen.blit(draw.imgTitle, [40, 60])
             
             #過去履歴がある場合、最大フロア数を表示
+            if self.fl_max == 0:
+                self.fl_max = self.DB.floorMax
             if self.fl_max >= 0:
                 draw.draw_text(self.screen, "You reached floor {}.".format(self.fl_max), 300, 460, self.font, draw.CYAN)
             draw.draw_text(self.screen, "Press space key", 320, 560, self.font, draw.BLINK[self.tmr%6]) 
@@ -330,8 +334,7 @@ class CommandData():
                 self.idx = 26
 
         elif self.idx == 1: # プレイヤーの移動
-            db = ""
-            self.move_player(key, pl, maps, db)
+            self.move_player(key, pl, maps)
             #表示の変更
             draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
             draw.draw_text(self.screen, "floor {} ({},{})".format(self.floor, pl.pl_x, pl.pl_y), 60, 40, self.fontS, draw.WHITE)
@@ -352,31 +355,14 @@ class CommandData():
             
             #タイマーの時間により処理を変更する
             if 1 <= self.tmr and self.tmr <= 5:
-                h = 80*self.tmr
+                h = 80 * self.tmr
                 pygame.draw.rect(self.screen, draw.BLACK, [0, 0, 880, h])
-                pygame.draw.rect(self.screen, draw.BLACK, [0, 720-h, 880, h])
+                pygame.draw.rect(self.screen, draw.BLACK, [0, 720 - h, 880, h])
             if self.tmr == 5: #フロアの制御
                 self.floor = self.floor + 1
                 if self.floor > self.fl_max:
                     self.fl_max = self.floor
-                    try:
-                        conn = 1    #１のままの場合接続失敗
-                        cur = 1     #１のままの場合接続失敗
-                        conn = psycopg2.connect(dsn)
-                        cur = conn.cursor()
-                        cur.execute("UPDATE test SET id = %s", (self.fl_max,))
-                        conn.commit()
-                        cur.execute("select id from test where name = 'MAX';")
-                        (self.fl_max,) = cur.fetchone()
-                        cur.close()
-                    except:
-                        if conn != 1:
-                            conn.rollback()
-                    finally:
-                        if conn != 1:
-                            conn.close()
-                        if cur != 1:
-                            cur.close()
+                    self.DB.UpdateflMax(self.fl_max)
                 self.welcome = 15
             if self.tmr == 6: #ボスダンジョンへ移動か、通常ダンジョンかを制御する
                 if self.floor == 10 or self.floor == 20 or self.floor == 30:
@@ -415,56 +401,57 @@ class CommandData():
                 pygame.mixer.Sound(filename + "/sound/se_field_potion.ogg").play()
             if self.tmr == 5:
                 pl_life = pl_life + 1000
-                if pl_life >= pl_lifemax:
-                    pl_life = pl_lifemax
-                potion = potion - 1
+                if pl_life >= pl.pl_lifemax:
+                    pl_life = pl.pl_lifemax
+                pl.potion = pl.potion - 1
             if self.tmr == 10:
                 self.idx = 1
                 
         elif self.idx == 5: # フィールドアイテム使用(ブレイズジェム)
             draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
-            self.screen.blit(imgItem[1], [320, 220])
+            self.screen.blit(draw.imgItem[1], [320, 220])
             draw.draw_text(self.screen, self.TRE_NAME[1], 380, 240, self.font, draw.WHITE)
-            img_rz = pygame.transform.rotozoom(imgEffect[1], 30*tmr, (12-tmr)/8)
-            X = int(440-img_rz.get_width()/2)
-            Y = int(360-img_rz.get_height()/2)
+            img_rz = pygame.transform.rotozoom(draw.imgEffect[1], 30 * self.tmr, (12- self.tmr ) / 8)
+            X = int(440 - img_rz.get_width()/2)
+            Y = int(360 - img_rz.get_height()/2)
             self.screen.blit(img_rz, [X, Y])
             
+
             #周りの繭を焼き払う
             if self.tmr == 1:
-                set_message("Blaze gem!")
+                draw.set_message("Blaze gem!")
                 pygame.mixer.Sound(filename + "/sound/eff_fireball.ogg").play()
             if self.tmr == 6:
                 blazegem = blazegem - 1
-            if self.tmr == 11:
-                if dungeon[pl_y-1][pl_x] == 2:
-                    dungeon[pl_y-1][pl_x] = 0
-            if self.tmr == 12:
-                if dungeon[pl_y+1][pl_x] == 2:
-                    dungeon[pl_y+1][pl_x] = 0
-            if self.tmr == 13:
-                if dungeon[pl_y][pl_x-1] == 2:
-                    dungeon[pl_y][pl_x-1] = 0
-            if self.tmr == 14:
-                if dungeon[pl_y][pl_x+1] == 2:
-                    dungeon[pl_y][pl_x+1] = 0
-            if self.tmr == 15:
-                if dungeon[pl_y-1][pl_x+1] == 2:
-                    dungeon[pl_y-1][pl_x+1] = 0
-            if self.tmr == 16:
-                if dungeon[pl_y-1][pl_x-1] == 2:
-                    dungeon[pl_y-1][pl_x-1] = 0
-            if self.tmr == 17:
-                if dungeon[pl_y+1][pl_x-1] == 2:
-                    dungeon[pl_y+1][pl_x-1] = 0
-            if self.tmr == 18:
-                if dungeon[pl_y+1][pl_x+1] == 2:
-                    dungeon[pl_y+1][pl_x+1] = 0
+            if self.tmr == 11: #下方向の処理
+                if maps.dungeon[pl.pl_y-1][pl.pl_x] == 2:
+                    maps.dungeon[pl.pl_y-1][pl.pl_x] = 0
+            if self.tmr == 12: #上方向の処理
+                if maps.dungeon[pl.pl_y+1][pl.pl_x] == 2:
+                    maps.dungeon[pl.pl_y+1][pl.pl_x] = 0
+            if self.tmr == 13: #左方向の処理
+                if maps.dungeon[pl.pl_y][pl.pl_x-1] == 2:
+                    maps.dungeon[pl.pl_y][pl.pl_x-1] = 0
+            if self.tmr == 14: #右方向の処理
+                if maps.dungeon[pl.pl_y][pl.pl_x+1] == 2:
+                    maps.dungeon[pl.pl_y][pl.pl_x+1] = 0
+            if self.tmr == 15: #右下向の処理
+                if maps.dungeon[pl.pl_y-1][pl.pl_x+1] == 2:
+                    maps.dungeon[pl.pl_y-1][pl.pl_x+1] = 0
+            if self.tmr == 16: #左下方向の処理
+                if maps.dungeon[pl.pl_y-1][pl.pl_x-1] == 2:
+                    maps.dungeon[pl.pl_y-1][pl.pl_x-1] = 0
+            if self.tmr == 17: #左上方向の処理
+                if maps.dungeon[pl.pl_y+1][pl.pl_x-1] == 2:
+                    maps.dungeon[pl.pl_y+1][pl.pl_x-1] = 0
+            if self.tmr == 18: #右上方向の処理
+                if maps.dungeon[pl.pl_y+1][pl.pl_x+1] == 2:
+                    maps.dungeon[pl.pl_y+1][pl.pl_x+1] = 0
             if self.tmr == 20:
                 self.idx = 1
 
         elif self.idx == 9: # ゲームオーバー
-            if tmr <= 30: #倒れるエフェクト
+            if self.tmr <= 30: #倒れるエフェクト
                 PL_TURN = [2, 4, 0, 6]
                 pl.pl_a = PL_TURN[self.tmr % 4]
                 if self.tmr == 30: pl.pl_a = 8 # 倒れた絵
@@ -494,11 +481,11 @@ class CommandData():
             else:
                 self.tmr == 17
             if self.tmr == 17:
-                if pl_eva >= self.enemyboss.emy_eva:
-                    self.idx = 11
+                if pl.pl_eva >= self.enemyboss.emy_eva:
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 0
                 else:
-                    self.idx = 13
+                    self.idx = 13 # 敵のターン
                     self.tmr = 0
 
         elif self.idx == 11: # プレイヤーのターン(入力待ち)
@@ -507,48 +494,48 @@ class CommandData():
             if self.boss == True:
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 1:draw.set_message("You turn.")
-            if skill == 0:
-                if battle_command(self.screen, self.font, key) == True:
-                    if btl_cmd == 0:
-                        self.idx = 12
+            if pl.skill == 0:
+                if self.battle_command(self.screen, self.font, key) == True:
+                    if self.btl_cmd == 0:
+                        self.idx = 12 #プレイヤーの攻撃へ
                         self.tmr = 0
-                    if btl_cmd == 1 and potion > 0:
-                        self.idx = 20
+                    if self.btl_cmd == 1 and pl.potion > 0:
+                        self.idx = 20 # Potion
                         self.tmr = 0
-                    if btl_cmd == 2 and blazegem > 0:
-                        self.idx = 21
+                    if self.btl_cmd == 2 and pl.blazegem > 0:
+                        self.idx = 21 # Blaze gem
                         self.tmr = 0
-                    if btl_cmd == 3:
-                        self.idx = 14
+                    if self.btl_cmd == 3:
+                        self.idx = 14 # 逃げられる？
                         self.tmr = 0
-            if skill >= 1:
+            if pl.skill >= 1:
                 if skill_c == True:
-                    if battle_command(self.screen, self.font, key) == True:
-                        if btl_cmd == 0:
-                            self.idx = 12
+                    if self.battle_command(self.screen, self.font, key) == True:
+                        if self.btl_cmd == 0:
+                            self.idx = 12 #プレイヤーの攻撃へ
                             self.tmr = 0
-                        if btl_cmd == 1 and potion > 0:
-                            self.idx = 20
+                        if self.btl_cmd == 1 and pl.potion > 0:
+                            self.idx = 20 # Potion
                             self.tmr = 0
-                        if btl_cmd == 2 and blazegem > 0:
-                            self.idx = 21
+                        if self.btl_cmd == 2 and pl.blazegem > 0:
+                            self.idx = 21 # Blaze gem
                             self.tmr = 0
-                        if btl_cmd == 3:
-                            self.idx = 18
+                        if self.btl_cmd == 3:
+                            self.idx = 18 # スキル画面に変更
                             self.tmr = 0
-                        if btl_cmd == 4:
-                            self.idx = 14
+                        if self.btl_cmd == 4:
+                            self.idx = 14 # 逃げられる？
                             self.tmr = 0
                 if skill_c == False:
-                    if battle_command(self.screen, self.font, key) == True:
-                        if skill_cmd == 0:
+                    if self.battle_command(self.screen, self.font, key) == True:
+                        if pl.skill_cmd == 0:
                             skill_c = True
-                        if skill_cmd == 1:
-                            self.idx = 19
+                        if pl.skill_cmd == 1:
+                            self.idx = 19 # プレイヤーのスキル(Shower Arrow)
                             self.tmr = 0
-                        if pl_lv >= 15:
-                            if skill_cmd == 2:
-                                self.idx = 23
+                        if pl.pl_lv >= 15:
+                            if pl.skill_cmd == 2:
+                                self.idx = 23 # プレイヤースキル(Deffense Charge)
                                 self.tmr = 0
                             
         elif self.idx == 12: # プレイヤーの攻撃
@@ -558,33 +545,20 @@ class CommandData():
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 1:
                 draw.set_message("You attack!")
-                if self.boss == False:
-                    pl_hit = 70 + pl_acy - emy_eva
-                if self.boss == True:
-                    pl_hit = 70 + pl_acy - boss_eva
+                pl_hit = 70 + pl.pl_acy - self.enemyboss.emy_eva
                 if pl_hit >= 100:
                     pl_hit = 99
                 if pl_hit < 0:
                     pl_hit = 0
                 hit = random.randint(1, 100)
-                if self.boss == False:
-                    if hit <= pl_hit:
-                        self.dmg= pl_atk - emy_def + int(pl_atk/random.randint(10,13))
-                        if self.dmg<= 0:
-                            self.dmg= 0
-                    else:
-                        self.se[6].play()
+                if hit <= pl_hit:
+                    self.dmg= pl.pl_atk - self.enemyboss.emy_def + int(pl.pl_atk/random.randint(10,13))
+                    if self.dmg<= 0:
                         self.dmg= 0
-                        self.tmr = 6
-                if self.boss == True:
-                    if hit <= pl_hit:
-                        self.dmg= pl_atk - boss_def + int(pl_atk/random.randint(10,13))
-                        if self.dmg<= 0:
-                            self.dmg= 0
-                    else:
-                        self.se[6].play()
-                        self.dmg= 0
-                        self.tmr = 6 
+                else:
+                    self.se[6].play()
+                    self.dmg= 0
+                    self.tmr = 6
                                        
             if self.tmr == 2:
                 self.se[9].play()
@@ -594,108 +568,77 @@ class CommandData():
                 self.screen.blit(img_3, [X, Y])
                 
             if self.tmr == 3:
-                img_3 = imgEffect[2]
+                img_3 = draw.imgEffect[2]
                 X = 520-int(img_3.get_width()/2)
                 Y = 460-int(img_3.get_height()/2)
                 self.screen.blit(img_3, [X, Y])
-                
+
             if self.tmr == 4:
                 self.se[9].play()
-                img_3 = imgEffect[2]
+                img_3 = draw.imgEffect[2]
                 X = 440-int(img_3.get_width()/2)
                 Y = 530-int(img_3.get_height()/2)
                 self.screen.blit(img_3, [X, Y])
                 
             if self.tmr == 5:
-                if self.boss == False:
-                    emy_blink = 5
-                if self.boss == True:
-                    boss_blink = 5
-                draw.set_message(str(dmg)+"pts of damege!")
+                self.enemyboss.emy_blink = 5
+                draw.set_message(str(self.dmg)+"pts of damege!")
                 self.tmr = 11
-            if self.tmr ==6:
+            if self.tmr == 6:
                 draw.set_message("miss")
                 self.tmr = 16
             if self.tmr == 11:
-                if self.boss == False:
-                    emy_life = emy_life - dmg
-                    if emy_life <= 0:
-                        emy_life = 0
-                        self.idx = 16
-                        self.tmr = 0
-                if self.boss == True:
-                    boss_life = boss_life -dmg
-                    if boss_life <= 0:
-                        boss_life = 0
-                        self.idx = 16
-                        self.tmr = 0
+                self.enemyboss.emy_life = self.enemyboss.emy_life - self.dmg
+                if self.enemyboss.emy_life <= 0:
+                    self.enemyboss.emy_life = 0
+                    self.idx = 16 # 勝利
+                    self.tmr = 0
             if self.tmr == 16:
-                self.idx = 13
+                self.idx = 13 # 敵のターン
                 self.tmr = 0
 
         elif self.idx == 13: # 敵のターン
-            if self.boss == False:
+            if self.boss == False: #通常敵
                 draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
-            if self.boss == True:
+            if self.boss == True: #ボス
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 2:
                 draw.set_message("Enemy turn.")
-            if self.tmr == 5:
-                if self.boss == False:
-                    draw.set_message(emy_name + " attack!")
-                    emy_step = 30
-                    emy_hit = 70 + emy_acy - pl_eva
-                    if emy_hit >= 100:
-                        emy_hit = 99
-                    e_hit = random.randint(1, 100)
-                    if e_hit <= emy_hit:
-                        se[0].play()
-                    else:
-                        se[6].play()
-                        self.dmg= 0
-                        self.tmr = 12
-                if self.boss == True:
-                    set_message(boss_name + " attack!")
-                    boss_step = 30
-                    emy_hit = 70 + boss_acy - pl_eva
-                    if emy_hit >= 100:
-                        emy_hit = 99
-                    e_hit = random.randint(1, 100)
-                    if e_hit <= emy_hit:
-                        self.se[0].play()
-                    else:
-                        self.se[6].play()
-                        self.dmg= 0
-                        self.tmr = 12
-            if self.tmr == 9:
-                if self.boss == False:
-                    self.dmg= emy_atk - pl_def + int(emy_atk/random.randint(10,13))
-                    if self.dmg<= 0:
-                        self.dmg= 0
-                    set_message(str(dmg)+"pts of damege!")
-                    dmg_eff = 5
-                    emy_step = 0
-                if self.boss == True:
-                    self.dmg= boss_atk - pl_def + int(emy_atk/random.randint(10,13))
-                    if self.dmg<= 0:
-                        self.dmg= 0
-                    draw.set_message(str(dmg)+"pts of damege!")
-                    dmg_eff = 5
-                    boss_step = 0
+            if self.tmr == 5: #回避判定
+                draw.set_message(self.enemyboss.emy_name + " attack!")
+                self.enemyboss.emy_step = 30
+                emy_hit = 70 + self.enemyboss.emy_acy - pl.pl_eva
+                #回避計算
+                if emy_hit >= 100:
+                    emy_hit = 99
+                e_hit = random.randint(1, 100)
+                if e_hit <= emy_hit:
+                    self.se[0].play()
+                else:
+                    self.se[6].play()
+                    self.dmg= 0
+                    self.tmr = 12
+            if self.tmr == 9: #ダメージ計算
+                self.dmg= self.enemyboss.emy_atk - pl.pl_def + int(self.enemyboss.emy_atk/random.randint(10,13))
+                if self.dmg <= 0:
+                    self.dmg= 0
+                draw.set_message(str(self.dmg)+"pts of damege!")
+                self.enemyboss.dmg_eff = 5
+                self.enemyboss.emy_step = 0
                 self.tmr = 15
             if self.tmr == 12:
                 draw.set_message("miss")
                 self.tmr = 20
-                emy_step = 0
+                self.enemyboss.emy_step = 0
             if self.tmr == 15:
-                pl_life = pl_life - dmg
-                if pl_life <= 0:
-                    pl_life = 0
-                    self.idx = 15
+                pl.pl_life = pl.pl_life - self.dmg
+                if pl.pl_life <= 0:
+                    pl.pl_life = 0
+                    self.idx = 15 # 敗北
                     self.tmr = 0
             if self.tmr == 20:
                 skill_c = True
-                self.idx = 11
+                self.idx = 11 # プレイヤーのターン(入力待ち)
                 self.tmr = 0
 
         elif self.idx == 14: # 逃げられる？
@@ -708,17 +651,17 @@ class CommandData():
             if self.tmr == 1: draw.set_message(".......")
             if self.tmr == 1: draw.set_message(".........")
             if self.tmr == 5:
-                if self.boss == False:
+                if self.boss == False: #ボス以外は逃げれるか計算する
                     if random.randint(0, 99) < 60:
-                        self.idx = 22
+                        self.idx = 22 # 戦闘終了
                     else:
                         draw.set_message("You faild to flee")
-                if self.boss == True:
+                if self.boss == True: #ボスの時は逃げれない
                     draw.set_message("You faild to flee")
-                    self.idx = 11
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 0
             if self.tmr == 10:
-                self.idx = 13
+                self.idx = 13 # 敵のターン
                 self.tmr = 0
 
         elif self.idx == 15: # 敗北
@@ -729,12 +672,12 @@ class CommandData():
             if self.tmr == 1:
                 pygame.mixer.music.stop()
                 draw.set_message("You lose.")
-                if def_ca == 1:
-                    pl_def = pl_def - def_c
-                    def_c = 0
-                    def_ca = 0
+                if pl.def_ca == 1: #ステータスを戻す処理
+                    pl.pl_def = pl.pl_def - pl.def_c
+                    pl.def_c = 0
+                    pl.def_ca = 0
             if self.tmr == 11:
-                self.idx = 9
+                self.idx = 9 # ゲームオーバー
                 self.tmr = 29
                 
         elif self.idx == 16: # 勝利
@@ -742,7 +685,7 @@ class CommandData():
                 draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.boss == True:
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
-            if self.tmr == 1:
+            if self.tmr == 1: #各種ステータスを戻す処理
                 if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
                     pl.def_c = 0
@@ -756,11 +699,11 @@ class CommandData():
                 pygame.mixer.music.stop()
                 self.se[5].play()
                 
-            if self.tmr == 28:
-                self.idx = 22
+            if self.tmr == 28: # レベルアップ判定
+                self.idx = 22 # 戦闘終了
                 if pl.pl_exp >= pl.max_exp:
                     pl.pl_lv = pl.pl_lv + 1
-                    self.idx = 17
+                    self.idx = 17 # レベルアップ
                     self.tmr = 0
 
         elif self.idx == 17: # レベルアップ
@@ -771,6 +714,7 @@ class CommandData():
             if self.tmr == 1:
                 draw.set_message("Level up")
                 self.se[4].play()
+                #レベルアップ時の各種ステータスのアップポイント
                 lif_p = random.randint(10, 20)
                 mp_p = random.randint(5, 10)
                 atk_p = random.randint(2, 5)
@@ -779,58 +723,58 @@ class CommandData():
                 acy_p = random.randint(2, 5)
                 eva_p = random.randint(2, 5)
                 pl_p = pl_p + 5
-            if self.tmr == 8:
-                draw.set_message("HP + "+str(pl.lif_p))
-                pl.pl_lifemax = pl.pl_lifemax + pl.lif_p
+            if self.tmr == 8: #HPステータスアップ表示
+                draw.set_message("HP + "+str(lif_p))
+                pl.pl_lifemax = pl.pl_lifemax + lif_p
                 pl.pl_life = pl.pl_life + 15
                 if pl.l_life >= pl.pl_lifemax:
                     pl.pl_life = pl.pl_lifemax
-            if self.tmr == 10:
-                draw.set_message("MP + "+str(pl.mp_p))
-                pl.pl_mpmax = pl.pl_mpmax + pl.mp_p
+            if self.tmr == 10: #MPステータスアップ表示
+                draw.set_message("MP + "+str(mp_p))
+                pl.pl_mpmax = pl.pl_mpmax + mp_p
                 pl.pl_mp = pl.pl_mp + 15
                 if pl.pl_mp >= pl.pl_mpmax:
                     pl.pl_mp = pl.pl_mpmax
-            if self.tmr == 12:
-                draw.set_message("ATK + "+str(pl.atk_p))
-                pl.pl_atk = pl.pl_atk + pl.atk_p
-            if self.tmr == 14:
-                draw.set_message("SP + "+str(pl.SP_p))
-                pl.max_SP = pl.max_SP + pl.SP_p
+            if self.tmr == 12: #ATKステータスアップ表示
+                draw.set_message("ATK + "+str(atk_p))
+                pl.pl_atk = pl.pl_atk + atk_p
+            if self.tmr == 14: #SPステータスアップ表示
+                draw.set_message("SP + "+str(SP_p))
+                pl.max_SP = pl.max_SP + SP_p
                 pl.SP = pl.SP + int(pl.max_SP / 2)
                 if pl.SP >= pl.max_SP:
                     pl.SP = pl.max_SP
-            if self.tmr == 16:
-                draw.set_message("DEF + "+str(pl.def_p))
-                pl.pl_def = pl.pl_def + pl.def_p
-            if self.tmr == 18:
-                draw.set_message("ACY + "+str(pl.acy_p))
-                pl.pl_acy = pl.pl_acy + pl.acy_p
-            if self.tmr == 20:
-                draw.set_message("EVA + "+str(pl.eva_p))
-                pl.pl_eva = pl.pl_eva + pl.eva_p
-            if self.tmr == 20:
+            if self.tmr == 16: #DEFステータスアップ表示
+                draw.set_message("DEF + "+str(def_p))
+                pl.pl_def = pl.pl_def + def_p
+            if self.tmr == 18: #ACYステータスアップ表示
+                draw.set_message("ACY + "+str(acy_p))
+                pl.pl_acy = pl.pl_acy + acy_p
+            if self.tmr == 20: #EVAステータスアップ表示
+                draw.set_message("EVA + "+str(eva_p))
+                pl.pl_eva = pl.pl_eva + eva_p
+            if self.tmr == 20: #プレイヤーポイント取得表示
                 draw.set_message("Player Point + 5")
-            if self.tmr == 20:
+            if self.tmr == 20: #スキル取得表示
                 if pl.pl_lv == 5:
                     draw.set_message("Skill Shower Allow get")
                 if pl.pl_lv == 15:
                     draw.set_message("Skill Defence Charge get")
-            if self.tmr == 35:
+            if self.tmr == 35: #レベルアップ（連続の場合）
                 if pl.pl_exp >= pl.max_exp:
-                    pl.pl_lv = pl_lv + 1
-                    self.idx = 17
+                    pl.pl_lv = pl.pl_lv + 1
+                    self.idx = 17 # レベルアップ
                     self.tmr = 0
-            if self.tmr == 50:
+            if self.tmr == 50: #スキルフラグ
                 pl.skill_c = True
-                self.idx = 22
+                self.idx = 22 # 戦闘終了
                 
         elif self.idx == 18: # スキル画面に変更
             draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 1:
                 skill_c = False
             if self.tmr == 2:
-                self.idx = 11
+                self.idx = 11 # プレイヤーのターン(入力待ち)
                 self.tmr = 2
                 
         elif self.idx == 19: # プレイヤーのスキル(Shower Arrow)
@@ -840,9 +784,9 @@ class CommandData():
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             mp_p = 30
             if self.tmr == 1:
-                if pl_mp < 30:
+                if pl.pl_mp < 30:
                     draw.set_message("MP Not Enough")
-                    self.idx = 11
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 1
                 if pl_mp >= 30:
                     self.tmr = 2
@@ -854,30 +798,21 @@ class CommandData():
                 self.screen.blit(img_rz, [X, Y])
                 self.se[7].play()
             if self.tmr == 7:
+                #ダメージ計算
                 self.se[8].play()
-                if self.boss == False:
-                    emy_blink = 5
-                    self.dmg= pl_atk + pl_acy * 2 + pl_lv * 5 + int(pl_acy/random.randint(10,13)) - self.enemyboss.emy_def
-                if self.boss == True:
-                    boss_blink = 5
-                    self.dmg= pl_atk + pl_acy * 2 + pl_lv * 5 + int(pl_acy/random.randint(10,13)) - self.enemyboss.boss_def
-                draw.set_message(str(dmg)+"pts of damege!")
+                self.enemyboss.emy_blink = 5
+                self.dmg= pl.pl_atk + pl.pl_acy * 2 + pl.pl_lv * 5 + int(pl.pl_acy/random.randint(10,13)) - self.enemyboss.emy_def
+                draw.set_message(str(self.dmg)+"pts of damege!")
             if self.tmr == 11:
+                #MPとダメージ反映
                 pl_mp = pl_mp - mp_p
-                if self.boss == False:
-                    emy_life = emy_life - dmg
-                    if emy_life <= 0:
-                        emy_life = 0
-                        self.idx = 16
-                        self.tmr = 0
-                if self.boss == True:
-                    self.enemyboss.boss_life = self.enemyboss.boss_life - dmg
-                    if self.enemyboss.boss_life <= 0:
-                        self.enemyboss.boss_life = 0
-                        self.idx = 16
-                        self.tmr = 0
+                emy_life = emy_life - self.dmg
+                if emy_life <= 0:
+                    emy_life = 0
+                    self.idx = 16 # 勝利
+                    self.tmr = 0
             if self.tmr == 16:
-                self.idx = 13
+                self.idx = 13 # 敵のターン
                 self.tmr = 0
 
 
@@ -895,9 +830,8 @@ class CommandData():
                     pl.pl_life = pl.pl_lifemax
                 pl.potion = pl.potion - 1
             if self.tmr == 11:
-                self.idx = 13
+                self.idx = 13 # 敵のターン
                 self.tmr = 0
-                #ここから上
 
         elif self.idx == 21: # Blaze gem
             if self.boss == False:
@@ -918,7 +852,7 @@ class CommandData():
                     self.dmg= 1000
                 if self.boss == True:
                     self.dmg= 500
-                self.idx = 12
+                self.idx = 12 #プレイヤーの攻撃へ
                 self.tmr = 4
                 
         elif self.idx == 22: # 戦闘終了
@@ -948,12 +882,12 @@ class CommandData():
             if self.tmr == 1:
                 if pl.pl_mp < 20:
                     draw.set_message("MP Not Enough")
-                    self.idx = 11
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 1
             if self.tmr == 2:
-                if def_ca >= 1:
+                if pl.def_ca >= 1:
                     draw.set_message("Deffense Charge Not Use")
-                    self.idx = 11
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 1
                 else:
                     pl.def_c = pl.pl_eva + pl.pl_lv
@@ -962,7 +896,7 @@ class CommandData():
             if self.tmr == 5:
                 pl.def_ca = pl.def_ca + 1
                 pl.pl_mp = pl.pl_mp - pl.mp_p
-                self.idx = 13
+                self.idx = 13 # 敵のターン
                 self.tmr = 0
 
         elif self.idx == 24: # ボスの戦闘
@@ -973,7 +907,7 @@ class CommandData():
                 self.init_boss_battle(filename)
                 draw.init_message()
             elif self.tmr <= 4:
-                bx = (4 - draw.tmr)*220
+                bx = (4 - self.tmr)*220
                 by = 0
                 self.screen.blit(draw.imgBtlBG, [bx, by])
                 draw.draw_text(self.screen, "Encounter!", 350, 200, self.font, draw.WHITE)
@@ -984,10 +918,10 @@ class CommandData():
                 self.tmr == 17
             if self.tmr == 17:
                 if pl.pl_eva >= self.enemyboss.boss_eva:
-                    self.idx = 11
+                    self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 0
                 else:
-                    self.idx = 13
+                    self.idx = 13 # 敵のターン
                     self.tmr = 0
                     
         elif self.idx == 25: # 説明
@@ -1001,7 +935,7 @@ class CommandData():
                 self.welcome = 15
                 pl.resetPlayer()
                 self.boss = False
-                self.idx = 1
+                self.idx = 1 #プレイヤー移動へ
                 pygame.mixer.music.load(filename + "/sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             
@@ -1013,29 +947,35 @@ class CommandData():
                 self.startInfo = 1
 
             if self.startInfo == 0:
-                a = draw.BLINK[self.tmr % 6]
-                b = draw.WHITE
+                newgame = draw.BLINK[self.tmr % 6]
+                load = draw.WHITE
             else:
-                a = draw.WHITE
-                b = draw.BLINK[self.tmr % 6]
+                newgame = draw.WHITE
+                load = draw.BLINK[self.tmr % 6]
 
             if key[K_RETURN] == 1:
                 if self.startInfo == 0:
-                    self.idx = 25
+                    self.idx = 25 #説明画面へ
                 elif self.startInfo == 1:
-                    self.idx = 28
-            draw.draw_text(self.screen, "New Game", 375, 500, self.font, a)
-            draw.draw_text(self.screen, "Continue", 375, 590, self.font, b)
+                    self.idx = 28 #ロード処理へ
+            draw.draw_text(self.screen, "New Game", 375, 500, self.font, newgame)
+            draw.draw_text(self.screen, "Continue", 375, 590, self.font, load)
+
         elif self.idx == 27: #セーブ
             #セーブ成功時
             draw.draw_text(self.screen, "SaveOK", 380, 240, self.font, draw.WHITE)
-            self.idx = 1
+            self.idx = 1 #プレイヤー移動へ
+
         elif self.idx == 28: #ロード（Continue押下時）
-            Load_data()
+            self.DB.Load_data(pl, maps)
             #セーブデータがない場合は動作させない
             if  pl.pl_atk == 0:
-                self.idx = 0
+                self.idx = 26 #スタート画面へ
                 return
+            else:
+                self.floor = self.DB.floor
+                self.boss = self.DB.boss
+                self.idx = self.DB.idx
             if self.floor <= 10:
                 pygame.mixer.music.load(filename + "/sound/0022.ogg")
             if self.floor >= 11 and self.floor <= 20:
@@ -1043,4 +983,4 @@ class CommandData():
             if self.floor >= 21:
                 pygame.mixer.music.load(filename + "/sound/0070.ogg")
             pygame.mixer.music.play(-1)
-            self.idx = 1 
+
