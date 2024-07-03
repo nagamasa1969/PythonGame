@@ -47,7 +47,7 @@ class Drawing():
         self.imgBoss = imgBoss
         self.imgBossField = imgBossField
         
-    def draw_dungeon(self, bg, fnt, FONT_1, mapC, pl_x, pl_y, pl_a, floor, pl):# ダンジョンを描画する
+    def draw_dungeon(self, bg, fnt, FONT_1, mapC, pl_x, pl_y, pl_a, floor, pl, tmr):# ダンジョンを描画する
         bg.fill(self.BLACK)
         for y in range(-4, 6):
             for x in range(-5, 6):
@@ -67,14 +67,14 @@ class Drawing():
                 if x == 0 and y == 0: #主人公のキャラ表示
                     bg.blit(self.imgPlayer1[pl_a], [X-6, Y-20])
         bg.blit(self.imgDark, [0, 0]) # 四隅が暗闇の画像を重ねる
-        self.draw_para(bg, fnt, FONT_1, pl) # 主人公の能力を表示
+        self.draw_para(bg, fnt, FONT_1, pl, tmr) # 主人公の能力を表示
     
-    def draw_para(self, bg, fnt, FONT_1, pl): #主人公の能力表示
+    def draw_para(self, bg, fnt, FONT_1, pl, tmr): #主人公の能力表示
         X = 30 
         Y = 600
         bg.blit(self.imgPara, [X, Y])
         col = self.WHITE
-        if pl.pl_life < int(pl.pl_lifemax/5) and self.tmr % 2 == 0:
+        if pl.pl_life < int(pl.pl_lifemax/5) and tmr % 2 == 0:
             col = self.RED
         self.draw_text(bg, "{}/{}".format(pl.pl_life, pl.pl_lifemax), X+83, Y+4, FONT_1, col)
         self.draw_text(bg, str(pl.pl_atk),X+190, Y+6, FONT_1, self.WHITE)
@@ -85,7 +85,7 @@ class Drawing():
         self.draw_text(bg, "{}/{}".format(pl.pl_exp, pl.max_exp), X+175, Y+62, FONT_1, self.WHITE)
         self.draw_text(bg, "{}/{}".format(pl.pl_mp, pl.pl_mpmax), X+83, Y+19, FONT_1, self.WHITE)
         col = self.WHITE
-        if pl.SP == 0 and tmr%2 == 0:
+        if pl.SP == 0 and tmr % 2 == 0:
             col = self.RED
         self.draw_text(bg, "{}/{}".format(pl.SP, pl.max_SP), X+83, Y+35, FONT_1, col)
         self.draw_text(bg, str(pl.potion), X+266, Y+6, FONT_1, self.WHITE)
@@ -116,7 +116,7 @@ class Drawing():
         if val > 0:
             pygame.draw.rect(bg, (0, 128, 255), [x, y, int(w*val/ma), h])
     
-    def draw_battle(self, bg, fnt, FONT_1, enemy, pl): # 戦闘画面の描画
+    def draw_battle(self, bg, fnt, FONT_1, enemy, pl,tmr): # 戦闘画面の描画
         bx = 0
         by = 0
         if enemy.dmg_eff > 0:
@@ -131,7 +131,7 @@ class Drawing():
             enemy.emy_blink = enemy.emy_blink - 1
         for i in range(10): # 戦闘メッセージの表示
             self.draw_text(bg, self.message[i], 600, 100+i*50, fnt, self.WHITE)
-        self.draw_para(bg, fnt, FONT_1, pl) # 主人公の能力を表示
+        self.draw_para(bg, fnt, FONT_1, pl, tmr) # 主人公の能力を表示
     
     def init_message(self):
         for i in range(10):
@@ -146,7 +146,7 @@ class Drawing():
             self.message[i] = self.message[i+1]
         self.message[9] = msg
         
-    def draw_boss_battle(self, bg, fnt, FONT_1, enemy, pl): # ボスの戦闘画面の描画
+    def draw_boss_battle(self, bg, fnt, FONT_1, enemy, pl, tmr): # ボスの戦闘画面の描画
         boss_bx = 0
         boss_by = 0
         if enemy.dmg_eff > 0:
@@ -161,5 +161,5 @@ class Drawing():
             enemy.boss_blink = enemy.boss_blink - 1
         for i in range(10): # 戦闘メッセージの表示
             self.draw_text(bg, self.message[i], 600, 100+i*50, fnt, self.WHITE)
-        self.draw_para(bg, fnt, FONT_1, pl) # 主人公の能力を表示
+        self.draw_para(bg, fnt, FONT_1, pl,tmr) # 主人公の能力を表示
             

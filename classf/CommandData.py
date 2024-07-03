@@ -32,6 +32,13 @@ class CommandData():
     BOSSNAME = []   #ボスの名称
     dmg = 0         #ダメージ
     DB = ""         #DB情報
+    lif_p = 0
+    mp_p = 0
+    atk_p = 0
+    SP_p = 0
+    def_p = 0
+    acy_p = 0
+    eva_p = 0
     
     def __init__(self, screen, clock, font, fontS, FONT_1, se, point_se, TRE_NAME, COMMAND, COMMAND1, SKILL_NAME, EMY_NAME, BOSSNAME, DB):
         #制御情報の初期化
@@ -336,7 +343,7 @@ class CommandData():
         elif self.idx == 1: # プレイヤーの移動
             self.move_player(key, pl, maps)
             #表示の変更
-            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             draw.draw_text(self.screen, "floor {} ({},{})".format(self.floor, pl.pl_x, pl.pl_y), 60, 40, self.fontS, draw.WHITE)
             draw.draw_text(self.screen, "[P] = potion use", 330, 600, self.FONT_1, draw.WHITE)
             draw.draw_text(self.screen, "[B] = Blaze gem use", 330, 620, self.FONT_1, draw.WHITE)
@@ -345,13 +352,13 @@ class CommandData():
             draw.draw_text(self.screen, "[Q] WideScreen [W] DefaultScreen [V]Save", 30, 580, self.FONT_1, draw.WHITE)
             draw.draw_text(self.screen,"Point : " + str(pl.pl_p), 30, 540, self.FONT_1, draw.WHITE)
             if self.map_flg:
-                draw.Map_info(self.screen)
+                draw.Map_info(self.screen, pl , maps)
             if self.welcome > 0:
                 self.welcome = self.welcome - 1
                 draw.draw_text(self.screen,"Welcome to floor {}.".format(self.floor), 300, 180, self.font, draw.CYAN)
 
         elif self.idx == 2: # 画面の切替
-            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             
             #タイマーの時間により処理を変更する
             if 1 <= self.tmr and self.tmr <= 5:
@@ -386,14 +393,14 @@ class CommandData():
                 self.idx = 1
 
         elif self.idx == 3: # アイテム入手もしくはトラップ
-            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             self.screen.blit(draw.imgItem[self.treasure], [320, 220])
             draw.draw_text(self.screen, self.TRE_NAME[self.treasure], 380, 240, self.font, draw.WHITE)
             if self.tmr == 10:
                 self.idx = 1
                 
         elif self.idx == 4: # フィールドアイテム使用(ポーション)
-            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             self.screen.blit(draw.imgItem[0], [320, 220])
             draw.draw_text(self.screen, self.TRE_NAME[0], 380, 240, self.font, draw.WHITE)
             if self.tmr == 1:
@@ -408,7 +415,7 @@ class CommandData():
                 self.idx = 1
                 
         elif self.idx == 5: # フィールドアイテム使用(ブレイズジェム)
-            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+            draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             self.screen.blit(draw.imgItem[1], [320, 220])
             draw.draw_text(self.screen, self.TRE_NAME[1], 380, 240, self.font, draw.WHITE)
             img_rz = pygame.transform.rotozoom(draw.imgEffect[1], 30 * self.tmr, (12- self.tmr ) / 8)
@@ -455,7 +462,7 @@ class CommandData():
                 PL_TURN = [2, 4, 0, 6]
                 pl.pl_a = PL_TURN[self.tmr % 4]
                 if self.tmr == 30: pl.pl_a = 8 # 倒れた絵
-                draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl)
+                draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             elif self.tmr == 31: #倒れた後の表示
                 self.se[3].play()
                 draw.draw_text(self.screen, "You died.", 360, 240, self.font, draw.RED)
@@ -476,7 +483,7 @@ class CommandData():
                 self.screen.blit(draw.imgBtlBG, [bx, by])
                 draw.draw_text(self.screen, "Encounter!", 350, 200, self.font, draw.WHITE)
             elif self.tmr <= 16:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
                 draw.draw_text(self.screen, self.enemyboss.emy_name + " apper!", 300, 200,self.font, draw.WHITE)
             else:
                 self.tmr == 17
@@ -490,9 +497,9 @@ class CommandData():
 
         elif self.idx == 11: # プレイヤーのターン(入力待ち)
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:draw.set_message("You turn.")
             if pl.skill == 0:
                 if self.battle_command(self.screen, self.font, key, draw, pl) == True:
@@ -509,7 +516,7 @@ class CommandData():
                         self.idx = 14 # 逃げられる？
                         self.tmr = 0
             if pl.skill >= 1:
-                if skill_c == True:
+                if pl.skill_c == True:
                     if self.battle_command(self.screen, self.font, key, draw, pl) == True:
                         if self.btl_cmd == 0:
                             self.idx = 12 #プレイヤーの攻撃へ
@@ -526,10 +533,10 @@ class CommandData():
                         if self.btl_cmd == 4:
                             self.idx = 14 # 逃げられる？
                             self.tmr = 0
-                if skill_c == False:
+                if pl.skill_c == False:
                     if self.battle_command(self.screen, self.font, key, draw, pl) == True:
                         if pl.skill_cmd == 0:
-                            skill_c = True
+                            pl.skill_c = True
                         if pl.skill_cmd == 1:
                             self.idx = 19 # プレイヤーのスキル(Shower Arrow)
                             self.tmr = 0
@@ -540,9 +547,9 @@ class CommandData():
                             
         elif self.idx == 12: # プレイヤーの攻撃
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("You attack!")
                 pl_hit = 70 + pl.pl_acy - self.enemyboss.emy_eva
@@ -599,9 +606,9 @@ class CommandData():
 
         elif self.idx == 13: # 敵のターン
             if self.boss == False: #通常敵
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True: #ボス
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 2:
                 draw.set_message("Enemy turn.")
             if self.tmr == 5: #回避判定
@@ -643,9 +650,9 @@ class CommandData():
 
         elif self.idx == 14: # 逃げられる？
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1,self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1: draw.set_message("...")
             if self.tmr == 2: draw.set_message(".....")
             if self.tmr == 1: draw.set_message(".......")
@@ -666,9 +673,9 @@ class CommandData():
 
         elif self.idx == 15: # 敗北
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 pygame.mixer.music.stop()
                 draw.set_message("You lose.")
@@ -682,9 +689,9 @@ class CommandData():
                 
         elif self.idx == 16: # 勝利
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1: #各種ステータスを戻す処理
                 if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
@@ -708,51 +715,51 @@ class CommandData():
 
         elif self.idx == 17: # レベルアップ
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("Level up")
                 self.se[4].play()
                 #レベルアップ時の各種ステータスのアップポイント
-                lif_p = random.randint(10, 20)
-                mp_p = random.randint(5, 10)
-                atk_p = random.randint(2, 5)
-                SP_p = random.randint(5, 10)
-                def_p = random.randint(4, 8)
-                acy_p = random.randint(2, 5)
-                eva_p = random.randint(2, 5)
+                self.lif_p = random.randint(10, 20)
+                self.mp_p = random.randint(5, 10)
+                self.atk_p = random.randint(2, 5)
+                self.SP_p = random.randint(5, 10)
+                self.def_p = random.randint(4, 8)
+                self.acy_p = random.randint(2, 5)
+                self.eva_p = random.randint(2, 5)
                 pl.pl_p = pl.pl_p + 5
             if self.tmr == 8: #HPステータスアップ表示
-                draw.set_message("HP + "+str(lif_p))
-                pl.pl_lifemax = pl.pl_lifemax + lif_p
+                draw.set_message("HP + "+str(self.lif_p))
+                pl.pl_lifemax = pl.pl_lifemax + self.lif_p
                 pl.pl_life = pl.pl_life + 15
-                if pl.l_life >= pl.pl_lifemax:
+                if pl.pl_life >= pl.pl_lifemax:
                     pl.pl_life = pl.pl_lifemax
             if self.tmr == 10: #MPステータスアップ表示
-                draw.set_message("MP + "+str(mp_p))
-                pl.pl_mpmax = pl.pl_mpmax + mp_p
+                draw.set_message("MP + "+str(self.mp_p))
+                pl.pl_mpmax = pl.pl_mpmax + self.mp_p
                 pl.pl_mp = pl.pl_mp + 15
                 if pl.pl_mp >= pl.pl_mpmax:
                     pl.pl_mp = pl.pl_mpmax
             if self.tmr == 12: #ATKステータスアップ表示
-                draw.set_message("ATK + "+str(atk_p))
-                pl.pl_atk = pl.pl_atk + atk_p
+                draw.set_message("ATK + "+str(self.atk_p))
+                pl.pl_atk = pl.pl_atk + self.atk_p
             if self.tmr == 14: #SPステータスアップ表示
-                draw.set_message("SP + "+str(SP_p))
-                pl.max_SP = pl.max_SP + SP_p
+                draw.set_message("SP + "+str(self.SP_p))
+                pl.max_SP = pl.max_SP + self.SP_p
                 pl.SP = pl.SP + int(pl.max_SP / 2)
                 if pl.SP >= pl.max_SP:
                     pl.SP = pl.max_SP
             if self.tmr == 16: #DEFステータスアップ表示
-                draw.set_message("DEF + "+str(def_p))
-                pl.pl_def = pl.pl_def + def_p
+                draw.set_message("DEF + "+str(self.def_p))
+                pl.pl_def = pl.pl_def + self.def_p
             if self.tmr == 18: #ACYステータスアップ表示
-                draw.set_message("ACY + "+str(acy_p))
-                pl.pl_acy = pl.pl_acy + acy_p
+                draw.set_message("ACY + "+str(self.acy_p))
+                pl.pl_acy = pl.pl_acy + self.acy_p
             if self.tmr == 20: #EVAステータスアップ表示
-                draw.set_message("EVA + "+str(eva_p))
-                pl.pl_eva = pl.pl_eva + eva_p
+                draw.set_message("EVA + "+str(self.eva_p))
+                pl.pl_eva = pl.pl_eva + self.eva_p
             if self.tmr == 20: #プレイヤーポイント取得表示
                 draw.set_message("Player Point + 5")
             if self.tmr == 20: #スキル取得表示
@@ -770,7 +777,7 @@ class CommandData():
                 self.idx = 22 # 戦闘終了
                 
         elif self.idx == 18: # スキル画面に変更
-            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 skill_c = False
             if self.tmr == 2:
@@ -779,9 +786,9 @@ class CommandData():
                 
         elif self.idx == 19: # プレイヤーのスキル(Shower Arrow)
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             mp_p = 30
             if self.tmr == 1:
                 if pl.pl_mp < 30:
@@ -818,9 +825,9 @@ class CommandData():
 
         elif self.idx == 20: # Potion
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("Potion!")
                 self.se[2].play()
@@ -835,9 +842,9 @@ class CommandData():
 
         elif self.idx == 21: # Blaze gem
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             img_rz = pygame.transform.rotozoom(draw.imgEffect[0], 30*  self.tmr, (12 - self.tmr) / 8)
             X = int(440-img_rz.get_width()/2)
             Y = int(360-img_rz.get_height()/2)
@@ -875,9 +882,9 @@ class CommandData():
 
         elif self.idx == 23: # プレイヤースキル(Deffense Charge)
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             mp_p = 20
             if self.tmr == 1:
                 if pl.pl_mp < 20:
@@ -912,7 +919,7 @@ class CommandData():
                 self.screen.blit(draw.imgBtlBG, [bx, by])
                 draw.draw_text(self.screen, "Encounter!", 350, 200, self.font, draw.WHITE)
             elif self.tmr <= 16:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.tmr)
                 draw.draw_text(self.screen, self.enemyboss.boss_name+" apper!", 300, 200, self.font, draw.WHITE)
             else:
                 self.tmr == 17
