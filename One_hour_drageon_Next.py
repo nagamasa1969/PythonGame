@@ -6,7 +6,7 @@ from classf import MapC
 from classf import Drawing
 from classf import PlayerSet
 from classf import CommandData
-from classf import DBcontrol
+from classf import DBControl
 
 # 画像の読み込み
 filename = os.path.expanduser('~/Desktop/One2')
@@ -126,7 +126,7 @@ def main():# メイン処理
     point_se = pygame.mixer.Sound(filename + "/sound/point_use.ogg")
     
     # DBクラスの初期化
-    DB = DBcontrol.DBcontrol(dsn)
+    DB = DBControl.DBcontrol(dsn)
 
     #プレイヤークラスの初期化
     plSt = PlayerSet.PlayerSet(pl_lifemax_s, pl_mpmax_s, pl_atk_s,

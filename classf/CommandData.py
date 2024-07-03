@@ -322,8 +322,8 @@ class CommandData():
             
             #過去履歴がある場合、最大フロア数を表示
             if self.fl_max == 0:
-                self.fl_max = self.DB.floorMax
-            if self.fl_max >= 0:
+                self.fl_max = self.DB.floor
+            if self.fl_max > 0:
                 draw.draw_text(self.screen, "You reached floor {}.".format(self.fl_max), 300, 460, self.font, draw.CYAN)
             draw.draw_text(self.screen, "Press space key", 320, 560, self.font, draw.BLINK[self.tmr%6]) 
             
@@ -495,7 +495,7 @@ class CommandData():
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 1:draw.set_message("You turn.")
             if pl.skill == 0:
-                if self.battle_command(self.screen, self.font, key) == True:
+                if self.battle_command(self.screen, self.font, key, draw, pl) == True:
                     if self.btl_cmd == 0:
                         self.idx = 12 #プレイヤーの攻撃へ
                         self.tmr = 0
@@ -510,7 +510,7 @@ class CommandData():
                         self.tmr = 0
             if pl.skill >= 1:
                 if skill_c == True:
-                    if self.battle_command(self.screen, self.font, key) == True:
+                    if self.battle_command(self.screen, self.font, key, draw, pl) == True:
                         if self.btl_cmd == 0:
                             self.idx = 12 #プレイヤーの攻撃へ
                             self.tmr = 0
@@ -527,7 +527,7 @@ class CommandData():
                             self.idx = 14 # 逃げられる？
                             self.tmr = 0
                 if skill_c == False:
-                    if self.battle_command(self.screen, self.font, key) == True:
+                    if self.battle_command(self.screen, self.font, key, draw, pl) == True:
                         if pl.skill_cmd == 0:
                             skill_c = True
                         if pl.skill_cmd == 1:
@@ -562,7 +562,7 @@ class CommandData():
                                        
             if self.tmr == 2:
                 self.se[9].play()
-                img_3 = self.imgEffect[2]
+                img_3 = draw.imgEffect[2]
                 X = 440-int(img_3.get_width()/2)
                 Y = 300-int(img_3.get_height()/2)
                 self.screen.blit(img_3, [X, Y])
@@ -599,7 +599,7 @@ class CommandData():
 
         elif self.idx == 13: # 敵のターン
             if self.boss == False: #通常敵
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True: #ボス
                 draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
             if self.tmr == 2:
@@ -643,9 +643,9 @@ class CommandData():
 
         elif self.idx == 14: # 逃げられる？
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1,self.enemyboss, pl)
             if self.tmr == 1: draw.set_message("...")
             if self.tmr == 2: draw.set_message(".....")
             if self.tmr == 1: draw.set_message(".......")
@@ -666,9 +666,9 @@ class CommandData():
 
         elif self.idx == 15: # 敗北
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.tmr == 1:
                 pygame.mixer.music.stop()
                 draw.set_message("You lose.")
@@ -682,9 +682,9 @@ class CommandData():
                 
         elif self.idx == 16: # 勝利
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.tmr == 1: #各種ステータスを戻す処理
                 if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
@@ -708,9 +708,9 @@ class CommandData():
 
         elif self.idx == 17: # レベルアップ
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.tmr == 1:
                 draw.set_message("Level up")
                 self.se[4].play()
@@ -722,7 +722,7 @@ class CommandData():
                 def_p = random.randint(4, 8)
                 acy_p = random.randint(2, 5)
                 eva_p = random.randint(2, 5)
-                pl_p = pl_p + 5
+                pl.pl_p = pl.pl_p + 5
             if self.tmr == 8: #HPステータスアップ表示
                 draw.set_message("HP + "+str(lif_p))
                 pl.pl_lifemax = pl.pl_lifemax + lif_p
@@ -770,7 +770,7 @@ class CommandData():
                 self.idx = 22 # 戦闘終了
                 
         elif self.idx == 18: # スキル画面に変更
-            draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.tmr == 1:
                 skill_c = False
             if self.tmr == 2:
@@ -779,9 +779,9 @@ class CommandData():
                 
         elif self.idx == 19: # プレイヤーのスキル(Shower Arrow)
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             mp_p = 30
             if self.tmr == 1:
                 if pl.pl_mp < 30:
@@ -818,9 +818,9 @@ class CommandData():
 
         elif self.idx == 20: # Potion
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.tmr == 1:
                 draw.set_message("Potion!")
                 self.se[2].play()
@@ -835,9 +835,9 @@ class CommandData():
 
         elif self.idx == 21: # Blaze gem
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             img_rz = pygame.transform.rotozoom(draw.imgEffect[0], 30*  self.tmr, (12 - self.tmr) / 8)
             X = int(440-img_rz.get_width()/2)
             Y = int(360-img_rz.get_height()/2)
@@ -875,9 +875,9 @@ class CommandData():
 
         elif self.idx == 23: # プレイヤースキル(Deffense Charge)
             if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, pl)
+                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl)
             mp_p = 20
             if self.tmr == 1:
                 if pl.pl_mp < 20:
