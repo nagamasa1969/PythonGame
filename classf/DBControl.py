@@ -37,7 +37,7 @@ class DBcontrol():
         conn = 1    #１のままの場合接続失敗
         cur = 1     #１のままの場合接続失敗
         try:
-            conn = psycopg2.connect(dsn)
+            conn = psycopg2.connect(self.dsn)
             cur = conn.cursor()
             cur.execute("UPDATE test SET id = %s", (fl_max,))
             conn.commit()
@@ -76,7 +76,7 @@ class DBcontrol():
         try:
             conn = 1    #１のままの場合接続に失敗
             cur = 1     #１のままの場合接続に失敗
-            conn = psycopg2.connect(dsn)
+            conn = psycopg2.connect(self.dsn)
             cur = conn.cursor()
 
             # 前回情報の削除
@@ -115,7 +115,7 @@ class DBcontrol():
         try:
             conn = 1  #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
             cur = 1   #１のままの場合DB接続失敗なのでコネクション終了処理を飛ばす
-            conn = psycopg2.connect(dsn)
+            conn = psycopg2.connect(self.dsn)
             cur = conn.cursor()
             # 情報読込
             cur.execute("select state from status where id = 1 order by stateid;")

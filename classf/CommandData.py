@@ -40,7 +40,7 @@ class CommandData():
     acy_p = 0
     eva_p = 0
     
-    def __init__(self, screen, clock, font, fontS, FONT_1, se, point_se, TRE_NAME, COMMAND, COMMAND1, SKILL_NAME, EMY_NAME, BOSSNAME, DB):
+    def __init__(self, screen, clock, font, fontS, FONT_1, se, point_se, TRE_NAME, COMMAND, COMMAND1, SKILL_NAME, EMY_NAME, BOSSNAME, DB, enemyboss):
         #制御情報の初期化
         self.tmr = 0
         self.idx = 0
@@ -69,6 +69,7 @@ class CommandData():
         self.BOSSNAME = BOSSNAME
         self.dmg= 0
         self.DB = DB
+        self.enemyboss = enemyboss
     
     def move_player(self, key, pl, maps): # 主人公の移動
     
@@ -158,8 +159,8 @@ class CommandData():
                 if pl.pl_life <= 0:
                     pl.pl_life = 0
                     pygame.mixer.music.stop()
-                    pl.self.idx = 9 # ゲームオーバー
-                    pl.self.tmr = 0
+                    self.self.idx = 9 # ゲームオーバー
+                    self.self.tmr = 0
                 if pl.pl_mp < pl.pl_mpmax:
                     pl.pl_mp = pl.pl_mp + 1
                 
@@ -228,7 +229,7 @@ class CommandData():
             self.DB.Save_data(pl, self.floor, self.idx, self.boss, maps)
             self.idx = 27 #セーブ
 
-    def init_battle(self, filename): # 戦闘に入る準備をする
+    def init_battle(self): # 戦闘に入る準備をする
         typ = random.randint(0, self.floor)
         if self.floor >= 20:
             typ = random.randint(0, 19)
@@ -236,15 +237,15 @@ class CommandData():
         #敵フラグ(True:敵 False:ボス)
         enemyFlg = True
         #敵情報作成
-        self.enemyboss = EnemyBoss(filename, enemyFlg, self.EMY_NAME, typ, lev)
+        self.enemyboss.updateEnemyBoss(enemyFlg, self.EMY_NAME, typ, lev)
     
-    def init_boss_battle(self, filename): # ボスの戦闘に入る準備をする
+    def init_boss_battle(self): # ボスの戦闘に入る準備をする
         lev = self.floor
         #敵フラグ(True:敵 False:ボス)
         enemyFlg = False
         typ = 0
         #ボス情報作成
-        self.enemyboss = EnemyBoss(filename, enemyFlg, self.BOSSNAME, typ, lev)
+        self.enemyboss.updateEnemyBoss(enemyFlg, self.BOSSNAME, typ, lev)
         
     def battle_command(self, bg, fnt, key, draw, pl): # コマンドの入力と表示
         ent = False
@@ -319,10 +320,10 @@ class CommandData():
                     draw.draw_text(bg, self.SKILL_NAME[i], 20, 360+i*60, fnt, c)
         return ent
         
-    def gameControl(self, filename, draw, pl, maps, key): #ゲーム全体の制御
+    def gameControl(self, draw, pl, maps, key): #ゲーム全体の制御
         if self.idx == 0: # タイトル画面
             if self.tmr == 1:
-                pygame.mixer.music.load(filename + "/sound/0071.ogg")
+                pygame.mixer.music.load("../sound/0071.ogg")
                 pygame.mixer.music.play(-1)
             self.screen.fill(draw.BLACK)
             self.screen.blit(draw.imgTitle, [40, 60])
@@ -374,7 +375,7 @@ class CommandData():
             if self.tmr == 6: #ボスダンジョンへ移動か、通常ダンジョンかを制御する
                 if self.floor == 10 or self.floor == 20 or self.floor == 30:
                     maps.boss_dungeon()
-                    maps.put_boss_event()
+                    maps.put_boss_event(pl)
                 else:
                     maps.make_dungeon()
                     maps.put_event(pl)
@@ -384,10 +385,10 @@ class CommandData():
                 pygame.draw.rect(self.screen, draw.BLACK, [0, 720-h, 880, h])
             if self.tmr == 11: #ダンジョンの階数によりBGMを変更する
                 if self.floor == 11:
-                    pygame.mixer.music.load(filename + "/sound/0021.ogg")
+                    pygame.mixer.music.load("../sound/0021.ogg")
                     pygame.mixer.music.play(-1)
                 if self.floor == 21:
-                    pygame.mixer.music.load(filename + "/sound/0070.ogg")
+                    pygame.mixer.music.load("../sound/0070.ogg")
                     pygame.mixer.music.play(-1)
             if self.tmr == 12:
                 self.idx = 1
@@ -405,11 +406,11 @@ class CommandData():
             draw.draw_text(self.screen, self.TRE_NAME[0], 380, 240, self.font, draw.WHITE)
             if self.tmr == 1:
                 draw.set_message("Potion!")
-                pygame.mixer.Sound(filename + "/sound/se_field_potion.ogg").play()
+                pygame.mixer.Sound("../sound/se_field_potion.ogg").play()
             if self.tmr == 5:
-                pl_life = pl_life + 1000
-                if pl_life >= pl.pl_lifemax:
-                    pl_life = pl.pl_lifemax
+                pl.pl_life = pl.pl_life + 1000
+                if pl.pl_life >= pl.pl_lifemax:
+                    pl.pl_life = pl.pl_lifemax
                 pl.potion = pl.potion - 1
             if self.tmr == 10:
                 self.idx = 1
@@ -427,7 +428,7 @@ class CommandData():
             #周りの繭を焼き払う
             if self.tmr == 1:
                 draw.set_message("Blaze gem!")
-                pygame.mixer.Sound(filename + "/sound/eff_fireball.ogg").play()
+                pygame.mixer.Sound("../sound/eff_fireball.ogg").play()
             if self.tmr == 6:
                 blazegem = blazegem - 1
             if self.tmr == 11: #下方向の処理
@@ -473,9 +474,9 @@ class CommandData():
 
         elif self.idx == 10: # 戦闘開始
             if self.tmr == 1:
-                pygame.mixer.music.load(filename+ "/sound/0154.ogg")
+                pygame.mixer.music.load(f"../sound/0154.ogg")
                 pygame.mixer.music.play(-1)
-                self.init_battle(filename)
+                self.init_battle()
                 draw.init_message()
             elif self.tmr <= 4:
                 bx = (4 - self.tmr) * 220
@@ -496,10 +497,7 @@ class CommandData():
                     self.tmr = 0
 
         elif self.idx == 11: # プレイヤーのターン(入力待ち)
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:draw.set_message("You turn.")
             if pl.skill == 0:
                 if self.battle_command(self.screen, self.font, key, draw, pl) == True:
@@ -535,21 +533,18 @@ class CommandData():
                             self.tmr = 0
                 if pl.skill_c == False:
                     if self.battle_command(self.screen, self.font, key, draw, pl) == True:
-                        if pl.skill_cmd == 0:
+                        if self.skill_cmd == 0:
                             pl.skill_c = True
-                        if pl.skill_cmd == 1:
+                        if self.skill_cmd == 1:
                             self.idx = 19 # プレイヤーのスキル(Shower Arrow)
                             self.tmr = 0
                         if pl.pl_lv >= 15:
-                            if pl.skill_cmd == 2:
+                            if self.skill_cmd == 2:
                                 self.idx = 23 # プレイヤースキル(Deffense Charge)
                                 self.tmr = 0
                             
         elif self.idx == 12: # プレイヤーの攻撃
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("You attack!")
                 pl_hit = 70 + pl.pl_acy - self.enemyboss.emy_eva
@@ -605,10 +600,7 @@ class CommandData():
                 self.tmr = 0
 
         elif self.idx == 13: # 敵のターン
-            if self.boss == False: #通常敵
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True: #ボス
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 2:
                 draw.set_message("Enemy turn.")
             if self.tmr == 5: #回避判定
@@ -649,10 +641,7 @@ class CommandData():
                 self.tmr = 0
 
         elif self.idx == 14: # 逃げられる？
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1: draw.set_message("...")
             if self.tmr == 2: draw.set_message(".....")
             if self.tmr == 1: draw.set_message(".......")
@@ -672,10 +661,7 @@ class CommandData():
                 self.tmr = 0
 
         elif self.idx == 15: # 敗北
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 pygame.mixer.music.stop()
                 draw.set_message("You lose.")
@@ -688,21 +674,14 @@ class CommandData():
                 self.tmr = 29
                 
         elif self.idx == 16: # 勝利
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1: #各種ステータスを戻す処理
                 if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
                     pl.def_c = 0
                     pl.def_ca = 0
-                if self.boss == False:
-                    draw.set_message("You win! "+str(self.enemyboss.emy_exp)+" exp get")
-                    pl.pl_exp = pl.pl_exp + self.enemyboss.emy_exp
-                if self.boss == True:
-                    draw.set_message("You win! "+str(self.enemyboss.boss_exp)+" exp get")
-                    pl.pl_exp = pl.pl_exp + self.enemyboss.boss_exp
+                draw.set_message("You win! "+str(self.enemyboss.emy_exp)+" exp get")
+                pl.pl_exp = pl.pl_exp + self.enemyboss.emy_exp
                 pygame.mixer.music.stop()
                 self.se[5].play()
                 
@@ -714,10 +693,7 @@ class CommandData():
                     self.tmr = 0
 
         elif self.idx == 17: # レベルアップ
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("Level up")
                 self.se[4].play()
@@ -785,17 +761,14 @@ class CommandData():
                 self.tmr = 2
                 
         elif self.idx == 19: # プレイヤーのスキル(Shower Arrow)
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             mp_p = 30
             if self.tmr == 1:
                 if pl.pl_mp < 30:
                     draw.set_message("MP Not Enough")
                     self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 1
-                if pl_mp >= 30:
+                if pl.pl_mp >= 30:
                     self.tmr = 2
                     draw.set_message("You skill Shower Arrow!!")
             if 2 <= self.tmr and self.tmr <= 6:
@@ -812,10 +785,10 @@ class CommandData():
                 draw.set_message(str(self.dmg)+"pts of damege!")
             if self.tmr == 11:
                 #MPとダメージ反映
-                pl_mp = pl_mp - mp_p
-                emy_life = emy_life - self.dmg
-                if emy_life <= 0:
-                    emy_life = 0
+                pl.pl_mp = pl.pl_mp - mp_p
+                self.enemyboss.emy_life = self.enemyboss.emy_life - self.dmg
+                if self.enemyboss.emy_life <= 0:
+                    self.enemyboss.emy_life = 0
                     self.idx = 16 # 勝利
                     self.tmr = 0
             if self.tmr == 16:
@@ -824,10 +797,7 @@ class CommandData():
 
 
         elif self.idx == 20: # Potion
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             if self.tmr == 1:
                 draw.set_message("Potion!")
                 self.se[2].play()
@@ -841,10 +811,7 @@ class CommandData():
                 self.tmr = 0
 
         elif self.idx == 21: # Blaze gem
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             img_rz = pygame.transform.rotozoom(draw.imgEffect[0], 30*  self.tmr, (12 - self.tmr) / 8)
             X = int(440-img_rz.get_width()/2)
             Y = int(360-img_rz.get_height()/2)
@@ -864,13 +831,13 @@ class CommandData():
                 
         elif self.idx == 22: # 戦闘終了
             if self.floor <= 10:
-                pygame.mixer.music.load(filename + "/sound/0022.ogg")
+                pygame.mixer.music.load("../sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             if self.floor >= 11 and self.floor <= 20:
-                pygame.mixer.music.load(filename + "/sound/0021.ogg")
+                pygame.mixer.music.load("../sound/0021.ogg")
                 pygame.mixer.music.play(-1)
             if self.floor >= 21:
-                pygame.mixer.music.load(filename + "/sound/0070.ogg")
+                pygame.mixer.music.load("../sound/0070.ogg")
                 pygame.mixer.music.play(-1)
             if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
@@ -881,10 +848,7 @@ class CommandData():
             self.idx = 1
 
         elif self.idx == 23: # プレイヤースキル(Deffense Charge)
-            if self.boss == False:
-                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
-            if self.boss == True:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+            draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
             mp_p = 20
             if self.tmr == 1:
                 if pl.pl_mp < 20:
@@ -902,16 +866,16 @@ class CommandData():
                     self.se[10].play()
             if self.tmr == 5:
                 pl.def_ca = pl.def_ca + 1
-                pl.pl_mp = pl.pl_mp - pl.mp_p
+                pl.pl_mp = pl.pl_mp - mp_p
                 self.idx = 13 # 敵のターン
                 self.tmr = 0
 
         elif self.idx == 24: # ボスの戦闘
             if self.tmr == 1:
                 self.boss = True
-                pygame.mixer.music.load(filename + "/sound/0008.ogg")
+                pygame.mixer.music.load("../sound/0008.ogg")
                 pygame.mixer.music.play(-1)
-                self.init_boss_battle(filename)
+                self.init_boss_battle()
                 draw.init_message()
             elif self.tmr <= 4:
                 bx = (4 - self.tmr)*220
@@ -919,12 +883,12 @@ class CommandData():
                 self.screen.blit(draw.imgBtlBG, [bx, by])
                 draw.draw_text(self.screen, "Encounter!", 350, 200, self.font, draw.WHITE)
             elif self.tmr <= 16:
-                draw.draw_boss_battle(self.screen, self.fontS, self.FONT_1, self.tmr)
-                draw.draw_text(self.screen, self.enemyboss.boss_name+" apper!", 300, 200, self.font, draw.WHITE)
+                draw.draw_battle(self.screen, self.fontS, self.FONT_1, self.enemyboss, pl, self.tmr)
+                draw.draw_text(self.screen, self.enemyboss.emy_name+" apper!", 300, 200, self.font, draw.WHITE)
             else:
                 self.tmr == 17
             if self.tmr == 17:
-                if pl.pl_eva >= self.enemyboss.boss_eva:
+                if pl.pl_eva >= self.enemyboss.emy_eva:
                     self.idx = 11 # プレイヤーのターン(入力待ち)
                     self.tmr = 0
                 else:
@@ -943,7 +907,7 @@ class CommandData():
                 pl.resetPlayer()
                 self.boss = False
                 self.idx = 1 #プレイヤー移動へ
-                pygame.mixer.music.load(filename + "/sound/0022.ogg")
+                pygame.mixer.music.load("../sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             
         elif self.idx == 26: #スタート画面（初めてか続きからを表示と制御）
@@ -984,10 +948,10 @@ class CommandData():
                 self.boss = self.DB.boss
                 self.idx = self.DB.idx
             if self.floor <= 10:
-                pygame.mixer.music.load(filename + "/sound/0022.ogg")
+                pygame.mixer.music.load("../sound/0022.ogg")
             if self.floor >= 11 and self.floor <= 20:
-                pygame.mixer.music.load(filename + "/sound/0021.ogg")
+                pygame.mixer.music.load("../sound/0021.ogg")
             if self.floor >= 21:
-                pygame.mixer.music.load(filename + "/sound/0070.ogg")
+                pygame.mixer.music.load("../sound/0070.ogg")
             pygame.mixer.music.play(-1)
 

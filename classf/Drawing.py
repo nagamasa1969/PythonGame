@@ -22,7 +22,6 @@ class Drawing():
     imgFloor = []
     imgPlayer1 = []
     imgEffect = []
-    imgBoss = ""
     imgBossField = []
     
     # 戦闘メッセージの表示処理
@@ -30,8 +29,8 @@ class Drawing():
     
     def __init__(self, imgTitle, imgExplanation, imgWall,
                  imgWall2, imgDark, imgPara, imgBtlBG,
-                 imgEnemy, imgItem, imgFloor, imgPlayer1,
-                 imgEffect, imgBoss, imgBossField): #初期化処理
+                 imgItem, imgFloor, imgPlayer1,
+                 imgEffect, imgBossField): #初期化処理
         self.imgTitle = imgTitle
         self.imgExplanation = imgExplanation
         self.imgWall = imgWall
@@ -39,12 +38,10 @@ class Drawing():
         self.imgDark = imgDark
         self.imgPara = imgPara
         self.imgBtlBG = imgBtlBG
-        self.imgEnemy = imgEnemy
         self.imgItem = imgItem
         self.imgFloor = imgFloor
         self.imgPlayer1 = imgPlayer1
         self.imgEffect = imgEffect
-        self.imgBoss = imgBoss
         self.imgBossField = imgBossField
         
     def draw_dungeon(self, bg, fnt, FONT_1, mapC, pl_x, pl_y, pl_a, floor, pl, tmr):# ダンジョンを描画する
@@ -125,7 +122,7 @@ class Drawing():
             by = random.randint(-10, 10)
         bg.blit(self.imgBtlBG, [bx, by])
         if enemy.emy_life > 0 and enemy.emy_blink % 2 == 0:
-            bg.blit(self.imgEnemy, [enemy.emy_x, enemy.emy_y + enemy.emy_step])
+            bg.blit(enemy.imgEnemy, [enemy.emy_x, enemy.emy_y + enemy.emy_step])
         self.draw_bar(bg, 340, 580, 200, 10, enemy.emy_life, enemy.emy_lifemax)
         if enemy.emy_blink > 0:
             enemy.emy_blink = enemy.emy_blink - 1
@@ -145,21 +142,3 @@ class Drawing():
         for i in range(9):
             self.message[i] = self.message[i+1]
         self.message[9] = msg
-        
-    def draw_boss_battle(self, bg, fnt, FONT_1, enemy, pl, tmr): # ボスの戦闘画面の描画
-        boss_bx = 0
-        boss_by = 0
-        if enemy.dmg_eff > 0:
-            enemy.dmg_eff = enemy.dmg_eff - 1
-            boss_bx = random.randint(-20, 20)
-            boss_by = random.randint(-10, 10)
-        bg.blit(self.imgBtlBG, [boss_bx, boss_by])
-        if enemy.boss_life > 0 and enemy.boss_blink%2 == 0:
-            bg.blit(self.imgBoss, [enemy.boss_x, enemy.boss_y + enemy.boss_step])
-        self.draw_bar(bg, 340, 580, 200, 10, enemy.boss_life, enemy.boss_lifemax)
-        if enemy.boss_blink > 0:
-            enemy.boss_blink = enemy.boss_blink - 1
-        for i in range(10): # 戦闘メッセージの表示
-            self.draw_text(bg, self.message[i], 600, 100+i*50, fnt, self.WHITE)
-        self.draw_para(bg, fnt, FONT_1, pl,tmr) # 主人公の能力を表示
-            

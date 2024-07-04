@@ -7,53 +7,53 @@ from classf import Drawing
 from classf import PlayerSet
 from classf import CommandData
 from classf import DBControl
+from classf import EnemyBoss
 
 # 画像の読み込み
-filename = os.path.expanduser('~/Desktop/One2')
-imgTitle = pygame.image.load(filename + "/image/title.png")
-imgExplanation = pygame.image.load(filename + "/image/setumei.png")
-imgWall = pygame.image.load(filename + "/image/wall.png")
-imgWall2 = pygame.image.load(filename + "/image/wall2.png")
-imgDark = pygame.image.load(filename + "/image/dark.png")
-imgPara = pygame.image.load(filename + "/image/para.png")
-imgBtlBG = pygame.image.load(filename + "/image/btlbg.png")
-imgEnemy = pygame.image.load(filename + "/image/enemy0.png")
+imgTitle = pygame.image.load("./image/title.png")
+imgExplanation = pygame.image.load("./image/setumei.png")
+imgWall = pygame.image.load("./image/wall.png")
+imgWall2 = pygame.image.load("./image/wall2.png")
+imgDark = pygame.image.load("./image/dark.png")
+imgPara = pygame.image.load("./image/para.png")
+imgBtlBG = pygame.image.load("./image/btlbg.png")
+imgEnemy = pygame.image.load("./image/enemy0.png")
 imgItem = [
-    pygame.image.load(filename + "/image/potion.png"),
-    pygame.image.load(filename + "/image/blaze_gem.png"),
-    pygame.image.load(filename + "/image/spoiled.png"),
-    pygame.image.load(filename + "/image/apple.png"),
-    pygame.image.load(filename + "/image/meat.png")
+    pygame.image.load("./image/potion.png"),
+    pygame.image.load("./image/blaze_gem.png"),
+    pygame.image.load("./image/spoiled.png"),
+    pygame.image.load("./image/apple.png"),
+    pygame.image.load("./image/meat.png")
 ]
 imgFloor = [
-    pygame.image.load(filename + "/image/floor.png"),
-    pygame.image.load(filename + "/image/tbox.png"),
-    pygame.image.load(filename + "/image/cocoon.png"),
-    pygame.image.load(filename + "/image/stairs.png"),
-    pygame.image.load(filename + "/image/tbox.png")
+    pygame.image.load("./image/floor.png"),
+    pygame.image.load("./image/tbox.png"),
+    pygame.image.load("./image/cocoon.png"),
+    pygame.image.load("./image/stairs.png"),
+    pygame.image.load("./image/tbox.png")
 ]
 
 imgPlayer1 = [
-    pygame.image.load(filename + "/image/chara1_0.png"),
-    pygame.image.load(filename + "/image/chara1_1.png"),
-    pygame.image.load(filename + "/image/chara1_2.png"),
-    pygame.image.load(filename + "/image/chara1_3.png"),
-    pygame.image.load(filename + "/image/chara1_4.png"),
-    pygame.image.load(filename + "/image/chara1_5.png"),
-    pygame.image.load(filename + "/image/chara1_6.png"),
-    pygame.image.load(filename + "/image/chara1_7.png"),
-    pygame.image.load(filename + "/image/chara1_8.png")
+    pygame.image.load("./image/chara1_0.png"),
+    pygame.image.load("./image/chara1_1.png"),
+    pygame.image.load("./image/chara1_2.png"),
+    pygame.image.load("./image/chara1_3.png"),
+    pygame.image.load("./image/chara1_4.png"),
+    pygame.image.load("./image/chara1_5.png"),
+    pygame.image.load("./image/chara1_6.png"),
+    pygame.image.load("./image/chara1_7.png"),
+    pygame.image.load("./image/chara1_8.png")
 ]
 imgEffect = [
-    pygame.image.load(filename + "/image/effect_b.png"),
-    pygame.image.load(filename + "/image/allow.png"),
-    pygame.image.load(filename + "/image/tue_effect.png")
+    pygame.image.load("./image/effect_b.png"),
+    pygame.image.load("./image/allow.png"),
+    pygame.image.load("./image/tue_effect.png")
 ]
-imgBoss = pygame.image.load(filename + "/image/floor_10_img.png")
+imgBoss = pygame.image.load("./image/floor_10_img.png")
 imgBossField = [
-    pygame.image.load(filename + "/image/floor_10.png"),
-    pygame.image.load(filename + "/image/floor_20.png"),
-    pygame.image.load(filename + "/image/floor_30.png")
+    pygame.image.load("./image/floor_10.png"),
+    pygame.image.load("./image/floor_20.png"),
+    pygame.image.load("./image/floor_30.png")
 ]
 
 #DB接続文字列（自宅内の読み込み）
@@ -103,27 +103,26 @@ def main():# メイン処理
     global speed, floor, fl_max, welcome, dsn
 
     pygame.init()
-    pygame.display.set_caption("one hour Dungeon Next")
     screen = pygame.display.set_mode((880, 720))
     clock = pygame.time.Clock()
     #フォント設定s
-    font = pygame.font.Font(filename + "/Freesansbold.ttf" , 30)
-    fontS = pygame.font.Font(filename + "/Freesansbold.ttf", 20)
-    FONT_1 = pygame.font.Font(filename+ "/Freesansbold.ttf", 13)
+    font = pygame.font.Font("./Freesansbold.ttf" , 30)
+    fontS = pygame.font.Font("./Freesansbold.ttf", 20)
+    FONT_1 = pygame.font.Font("./Freesansbold.ttf", 13)
     se = [ # 効果音とジングル
-        pygame.mixer.Sound(filename + "/sound/ohd_se_attack.ogg"),
-        pygame.mixer.Sound(filename + "/sound/eff_fireball.ogg"),
-        pygame.mixer.Sound(filename + "/sound/se_field_potion.ogg"),
-        pygame.mixer.Sound(filename + "/sound/0020.ogg"),
-        pygame.mixer.Sound(filename + "/sound/0066levup.ogg"),
-        pygame.mixer.Sound(filename + "/sound/0059.ogg"),
-        pygame.mixer.Sound(filename + "/sound/miss.ogg"),
-        pygame.mixer.Sound(filename + "/sound/eff_magicstart.ogg"),
-        pygame.mixer.Sound(filename + "/sound/eff_lightning1.ogg"),
-        pygame.mixer.Sound(filename + "/sound/dmg_wind_g.ogg"),
-        pygame.mixer.Sound(filename + "/sound/def_up.ogg")
+        pygame.mixer.Sound("./sound/ohd_se_attack.ogg"),
+        pygame.mixer.Sound("./sound/eff_fireball.ogg"),
+        pygame.mixer.Sound("./sound/se_field_potion.ogg"),
+        pygame.mixer.Sound("./sound/0020.ogg"),
+        pygame.mixer.Sound("./sound/0066levup.ogg"),
+        pygame.mixer.Sound("./sound/0059.ogg"),
+        pygame.mixer.Sound("./sound/miss.ogg"),
+        pygame.mixer.Sound("./sound/eff_magicstart.ogg"),
+        pygame.mixer.Sound("./sound/eff_lightning1.ogg"),
+        pygame.mixer.Sound("./sound/dmg_wind_g.ogg"),
+        pygame.mixer.Sound("./sound/def_up.ogg")
     ]
-    point_se = pygame.mixer.Sound(filename + "/sound/point_use.ogg")
+    point_se = pygame.mixer.Sound("./sound/point_use.ogg")
     
     # DBクラスの初期化
     DB = DBControl.DBcontrol(dsn)
@@ -135,10 +134,13 @@ def main():# メイン処理
                 potion_s, blazegem_s, def_ca_s, def_c_s,
                 skill_c_s)
     
+    #Enemyクラスの初期化
+    enemyboss = EnemyBoss.EnemyBoss()
+    
     #制御クラスの初期化
     cmDt = CommandData.CommandData(screen, clock, font, fontS, FONT_1,
                                    se, point_se, TRE_NAME, COMMAND,
-                                   COMMAND1, SKILL_NAME, EMY_NAME, BOSS_NAME, DB)
+                                   COMMAND1, SKILL_NAME, EMY_NAME, BOSS_NAME, DB, enemyboss)
     
     #ダンジョンクラスの初期化
     mapCt = MapC.MapC()
@@ -146,8 +148,8 @@ def main():# メイン処理
     #描画クラスの初期化
     drawCt = Drawing.Drawing(imgTitle, imgExplanation, imgWall,
                         imgWall2, imgDark, imgPara, imgBtlBG,
-                        imgEnemy, imgItem, imgFloor, imgPlayer1,
-                        imgEffect, imgBoss, imgBossField)
+                        imgItem, imgFloor, imgPlayer1,
+                        imgEffect, imgBossField)
     
     #ゲーム終了まで無限ループさせる
     while True:
@@ -163,7 +165,7 @@ def main():# メイン処理
 
         cmDt.tmr = cmDt.tmr + 1 #タイマーを１上昇
         key = pygame.key.get_pressed()
-        cmDt.gameControl(filename, drawCt, plSt, mapCt, key)
+        cmDt.gameControl(drawCt, plSt, mapCt, key)
         drawCt.draw_text(screen, "[S]peed"+str(speed), 740, 40, fontS, drawCt.WHITE)
         plSt.player_exp()
         pygame.display.update()
