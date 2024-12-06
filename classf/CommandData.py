@@ -330,7 +330,8 @@ class CommandData():
             
             #過去履歴がある場合、最大フロア数を表示
             if self.fl_max == 0:
-                self.fl_max = self.DB.floor
+                if self.DB != "":
+                    self.fl_max = self.DB.floor
             if self.fl_max > 0:
                 draw.draw_text(self.screen, "You reached floor {}.".format(self.fl_max), 300, 460, self.font, draw.CYAN)
             draw.draw_text(self.screen, "Press space key", 320, 560, self.font, draw.BLINK[self.tmr%6]) 
@@ -370,7 +371,8 @@ class CommandData():
                 self.floor = self.floor + 1
                 if self.floor > self.fl_max:
                     self.fl_max = self.floor
-                    self.DB.UpdateflMax(self.fl_max)
+                    if self.DB != "":
+                        self.DB.UpdateflMax(self.fl_max)
                 self.welcome = 15
             if self.tmr == 6: #ボスダンジョンへ移動か、通常ダンジョンかを制御する
                 if self.floor == 10 or self.floor == 20 or self.floor == 30:

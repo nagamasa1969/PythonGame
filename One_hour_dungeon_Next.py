@@ -58,7 +58,8 @@ imgBossField = [
 
 #DB接続文字列（自宅内の読み込み）
 #dsn = "dbname=postgres user=postgres host=192.168.3.7 password=naga1969 port=5432"  #外部PC接続用
-dsn = "dbname=game host=localhost user=nagamasa password=naga19691"                  #自分のPC接続用
+#dsn = "dbname=postgres user=postgres host=SETUZOKUYOU.local password=naga1969 port=5432"  #外部PC接続用
+dsn = "dbname=game host=localhost user=nagamasa password=naga196911 port=5432"                  #自分のPC接続用
     
 # 変数の宣言
 speed = 1         #スピード
@@ -125,7 +126,10 @@ def main():# メイン処理
     point_se = pygame.mixer.Sound("./sound/point_use.ogg")
     
     # DBクラスの初期化
-    DB = DBControl.DBcontrol(dsn)
+    if dsn != "":
+        DB = DBControl.DBcontrol(dsn)
+    else:
+        DB = ""
 
     #プレイヤークラスの初期化
     plSt = PlayerSet.PlayerSet(pl_lifemax_s, pl_mpmax_s, pl_atk_s,
