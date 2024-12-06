@@ -421,7 +421,7 @@ class CommandData():
             draw.draw_dungeon(self.screen, self.fontS, self.FONT_1, maps, pl.pl_x, pl.pl_y, pl.pl_a, self.floor, pl, self.tmr)
             self.screen.blit(draw.imgItem[1], [320, 220])
             draw.draw_text(self.screen, self.TRE_NAME[1], 380, 240, self.font, draw.WHITE)
-            img_rz = pygame.transform.rotozoom(draw.imgEffect[1], 30 * self.tmr, (12- self.tmr ) / 8)
+            img_rz = pygame.transform.rotozoom(draw.imgEffect[0], 30 * self.tmr, (12- self.tmr ) / 8)
             X = int(440 - img_rz.get_width()/2)
             Y = int(360 - img_rz.get_height()/2)
             self.screen.blit(img_rz, [X, Y])
@@ -432,7 +432,7 @@ class CommandData():
                 draw.set_message("Blaze gem!")
                 pygame.mixer.Sound("../sound/eff_fireball.ogg").play()
             if self.tmr == 6:
-                blazegem = blazegem - 1
+                pl.blazegem = pl.blazegem - 1
             if self.tmr == 11: #下方向の処理
                 if maps.dungeon[pl.pl_y-1][pl.pl_x] == 2:
                     maps.dungeon[pl.pl_y-1][pl.pl_x] = 0
