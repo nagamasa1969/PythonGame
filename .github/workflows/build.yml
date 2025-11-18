@@ -24,7 +24,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build with PyInstaller (including assets)
-        run: run: pyinstaller --onefile --windowed --name MyGame --add-data "assets;assets" One_hour_dungeon_Next.py
+        run: pyinstaller --onefile --windowed --name MyGame --add-data "assets;assets" One_hour_dungeon_Next.py
 
       - name: Upload EXE Artifact
         uses: actions/upload-artifact@v4
