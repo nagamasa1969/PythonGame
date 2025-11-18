@@ -31,5 +31,3 @@ jobs:
         with:
           name: MyGame-exe
           path: dist/
-
-          
