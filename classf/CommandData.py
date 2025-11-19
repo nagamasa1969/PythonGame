@@ -323,7 +323,7 @@ class CommandData():
     def gameControl(self, draw, pl, maps, key): #ゲーム全体の制御
         if self.idx == 0: # タイトル画面
             if self.tmr == 1:
-                pygame.mixer.music.load("../sound/0071.ogg")
+                pygame.mixer.music.load("./sound/0071.ogg")
                 pygame.mixer.music.play(-1)
             self.screen.fill(draw.BLACK)
             self.screen.blit(draw.imgTitle, [40, 60])
@@ -387,10 +387,10 @@ class CommandData():
                 pygame.draw.rect(self.screen, draw.BLACK, [0, 720-h, 880, h])
             if self.tmr == 11: #ダンジョンの階数によりBGMを変更する
                 if self.floor == 11:
-                    pygame.mixer.music.load("../sound/0021.ogg")
+                    pygame.mixer.music.load("./sound/0021.ogg")
                     pygame.mixer.music.play(-1)
                 if self.floor == 21:
-                    pygame.mixer.music.load("../sound/0070.ogg")
+                    pygame.mixer.music.load("./sound/0070.ogg")
                     pygame.mixer.music.play(-1)
             if self.tmr == 12:
                 self.idx = 1
@@ -408,7 +408,7 @@ class CommandData():
             draw.draw_text(self.screen, self.TRE_NAME[0], 380, 240, self.font, draw.WHITE)
             if self.tmr == 1:
                 draw.set_message("Potion!")
-                pygame.mixer.Sound("../sound/se_field_potion.ogg").play()
+                pygame.mixer.Sound("./sound/se_field_potion.ogg").play()
             if self.tmr == 5:
                 pl.pl_life = pl.pl_life + 1000
                 if pl.pl_life >= pl.pl_lifemax:
@@ -430,7 +430,7 @@ class CommandData():
             #周りの繭を焼き払う
             if self.tmr == 1:
                 draw.set_message("Blaze gem!")
-                pygame.mixer.Sound("../sound/eff_fireball.ogg").play()
+                pygame.mixer.Sound("./sound/eff_fireball.ogg").play()
             if self.tmr == 6:
                 pl.blazegem = pl.blazegem - 1
             if self.tmr == 11: #下方向の処理
@@ -476,7 +476,7 @@ class CommandData():
 
         elif self.idx == 10: # 戦闘開始
             if self.tmr == 1:
-                pygame.mixer.music.load(f"../sound/0154.ogg")
+                pygame.mixer.music.load(f"./sound/0154.ogg")
                 pygame.mixer.music.play(-1)
                 self.init_battle()
                 draw.init_message()
@@ -833,13 +833,13 @@ class CommandData():
                 
         elif self.idx == 22: # 戦闘終了
             if self.floor <= 10:
-                pygame.mixer.music.load("../sound/0022.ogg")
+                pygame.mixer.music.load("./sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             if self.floor >= 11 and self.floor <= 20:
-                pygame.mixer.music.load("../sound/0021.ogg")
+                pygame.mixer.music.load("./sound/0021.ogg")
                 pygame.mixer.music.play(-1)
             if self.floor >= 21:
-                pygame.mixer.music.load("../sound/0070.ogg")
+                pygame.mixer.music.load("./sound/0070.ogg")
                 pygame.mixer.music.play(-1)
             if pl.def_ca == 1:
                     pl.pl_def = pl.pl_def - pl.def_c
@@ -875,7 +875,7 @@ class CommandData():
         elif self.idx == 24: # ボスの戦闘
             if self.tmr == 1:
                 self.boss = True
-                pygame.mixer.music.load("../sound/0008.ogg")
+                pygame.mixer.music.load("./sound/0008.ogg")
                 pygame.mixer.music.play(-1)
                 self.init_boss_battle()
                 draw.init_message()
@@ -909,7 +909,7 @@ class CommandData():
                 pl.resetPlayer()
                 self.boss = False
                 self.idx = 1 #プレイヤー移動へ
-                pygame.mixer.music.load("../sound/0022.ogg")
+                pygame.mixer.music.load("./sound/0022.ogg")
                 pygame.mixer.music.play(-1)
             
         elif self.idx == 26: #スタート画面（初めてか続きからを表示と制御）
@@ -950,10 +950,10 @@ class CommandData():
                 self.boss = self.DB.boss
                 self.idx = self.DB.idx
             if self.floor <= 10:
-                pygame.mixer.music.load("../sound/0022.ogg")
+                pygame.mixer.music.load("./sound/0022.ogg")
             if self.floor >= 11 and self.floor <= 20:
-                pygame.mixer.music.load("../sound/0021.ogg")
+                pygame.mixer.music.load("./sound/0021.ogg")
             if self.floor >= 21:
-                pygame.mixer.music.load("../sound/0070.ogg")
+                pygame.mixer.music.load("./sound/0070.ogg")
             pygame.mixer.music.play(-1)
 
