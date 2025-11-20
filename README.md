@@ -1,5 +1,5 @@
 ファイルのエントリーポイントがあるファイルは「One_hour_dungeon_Next.py」になります。
 DB接続設定がありますが接続しなくても動作できます。
-MAC OSでappファイルのアプリが使用可能です。配布版フォルダーにappファイルがあるのでPythonGameフォルダ毎、デスクトップに移動しappファイルを起動してください。Windowsの場合、PyInstallerなどでコンパイルが必要です。（配布版にはDB接続はありません）
+MAC OSでappファイルのアプリが使用可能です。配布版フォルダーにappファイルがあるのでPythonGameフォルダ毎、デスクトップに移動しappファイルを起動してください。
 Windows版も追加しました。起動するにはsound、image、のフォルダのダウンロードとFreesansbold.ttfのファイルをダウンロードし、Mygame.exeと同じフォルダ内に、配置して起動してください。
 現在のダウンロードURL https://github.com/nagamasa1969/PythonGame/actions/runs/19525657746/artifacts/4623360345
