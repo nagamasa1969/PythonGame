@@ -256,53 +256,58 @@ class CommandData():
         
     def battle_command(self, bg, fnt, key, draw, pl): # コマンドの入力と表示
         ent = False
-        if key[K_a] and pl.skill_c == True: # Aキー
-            self.btl_cmd = 0
-            ent = True
-        if key[K_p] and pl.skill_c == True: # Pキー
-            self.btl_cmd = 1
-            ent = True
-        if key[K_b] and pl.skill_c == True: # Bキー
-            self.btl_cmd = 2
-            ent = True
-        if pl.skill >= 1:
-            if key[K_k] and pl.skill_c == True:# Kキー
-                pl.skill_c = False
-        if key[K_r] and pl.skill_c == True: # Rキー
-            if pl.skill == 0:
-                self.btl_cmd = 3
+        if self.move_wait > 0:
+            self.move_wait -= 1
+        else:
+            if key[K_a] and pl.skill_c == True: # Aキー
+                self.btl_cmd = 0
                 ent = True
-            else:
-                self.btl_cmd = 4
+            if key[K_p] and pl.skill_c == True: # Pキー
+                self.btl_cmd = 1
                 ent = True
-        if key[K_1]and pl.skill_c == False:# 1キー
-            self.skill_cmd = 0
-            ent = True
-        if key[K_2]and pl.skill_c == False:# 2キー
-            self.skill_cmd = 1
-            ent = True
-        if pl.pl_lv >= 15:
-            if key[K_3] and pl.skill_c == False:# 3キー
-                self.skill_cmd = 2
+            if key[K_b] and pl.skill_c == True: # Bキー
+                self.btl_cmd = 2
                 ent = True
-        if key[K_UP]: # ↑キー
-            if self.btl_cmd > 0 and pl.skill_c == True:
-                self.btl_cmd -= 1
-            if self.skill_cmd > 0 and pl.skill_c == False:
-                self.skill_cmd -= 1       
-        if key[K_DOWN]: # ↓キー
-            if pl.skill == 0 and self.btl_cmd < 3:
-                self.btl_cmd += 1
-            if pl.skill >= 1 and self.btl_cmd < 4 and pl.skill_c == True:
-                self.btl_cmd += 1
-            if pl.pl_lv <= 5 and pl.skill_c == False:
-                if self.skill_cmd < 1:
-                    self.skill_cmd += 1
-            if pl.pl_lv >= 15 and pl.skill_c == False:
-                if self.skill_cmd < 2:
-                    self.skill_cmd += 1
-        if key[K_SPACE] or key[K_RETURN]: #スペースまたはリターンキー
-            ent = True
+            if pl.skill >= 1:
+                if key[K_k] and pl.skill_c == True:# Kキー
+                    pl.skill_c = False
+            if key[K_r] and pl.skill_c == True: # Rキー
+                if pl.skill == 0:
+                    self.btl_cmd = 3
+                    ent = True
+                else:
+                    self.btl_cmd = 4
+                    ent = True
+            if key[K_1]and pl.skill_c == False:# 1キー
+                self.skill_cmd = 0
+                ent = True
+            if key[K_2]and pl.skill_c == False:# 2キー
+                self.skill_cmd = 1
+                ent = True
+            if pl.pl_lv >= 15:
+                if key[K_3] and pl.skill_c == False:# 3キー
+                    self.skill_cmd = 2
+                    ent = True
+            if key[K_UP]: # ↑キー
+                if self.btl_cmd > 0 and pl.skill_c == True:
+                    self.btl_cmd -= 1
+                if self.skill_cmd > 0 and pl.skill_c == False:
+                    self.skill_cmd -= 1
+                self.move_wait = 2
+            if key[K_DOWN]: # ↓キー
+                if pl.skill == 0 and self.btl_cmd < 3:
+                    self.btl_cmd += 1
+                if pl.skill >= 1 and self.btl_cmd < 4 and pl.skill_c == True:
+                    self.btl_cmd += 1
+                if pl.pl_lv <= 5 and pl.skill_c == False:
+                    if self.skill_cmd < 1:
+                        self.skill_cmd += 1
+                if pl.pl_lv >= 15 and pl.skill_c == False:
+                    if self.skill_cmd < 2:
+                        self.skill_cmd += 1
+                self.move_wait = 2
+            if key[K_SPACE] or key[K_RETURN]: #スペースまたはリターンキー
+                ent = True
             
         if pl.skill <= 1: #スキル状態確認
             for i in range(4):
