@@ -70,8 +70,13 @@ class CommandData():
         self.dmg= 0
         self.DB = DB
         self.enemyboss = enemyboss
+        self.move_wait = 0
+        self.walk_step = 0
     
     def move_player(self, key, pl, maps): # 主人公の移動
+        if self.move_wait > 0:
+            self.move_wait = self.move_wait - 1
+            return
     
         if maps.dungeon[pl.pl_y][pl.pl_x] == 1: # 宝箱に載った
             maps.dungeon[pl.pl_y][pl.pl_x] = 0
@@ -145,7 +150,9 @@ class CommandData():
                 pl.pl_x = pl.pl_x + 1
         pl.pl_a = pl.pl_d * 2
         if pl.pl_x != x or pl.pl_y != y: #移動したら食料の量と体力とMPを計算
-            pl.pl_a = pl.pl_a + self.tmr % 2 # 移動したら足踏みのアニメーション
+            self.walk_step = self.walk_step + 1
+            pl.pl_a = pl.pl_a + self.walk_step % 2 # 移動したら足踏みのアニメーション
+            self.move_wait = 1
         
             #SPの管理SP、SPがなくなるとライフが１ずつ減少する
             if pl.SP > 0:
